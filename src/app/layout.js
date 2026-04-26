@@ -1,23 +1,19 @@
-import { Urbanist } from 'next/font/google';
-import './globals.css';
-
-const urbanist = Urbanist({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-urbanist',
-});
+import './globals.css'
 
 export const metadata = {
-  title: 'Heaven Ark Properties',
-  description: 'Discover your dream home with Heaven Ark Properties. Premium real estate services.',
-};
+    title: {
+        default: 'HAP Properties - Secure Land Investments',
+        template: '%s | HAP Properties'
+    },
+    description: 'Invest in verified land properties with confidence. Track payments, download documents, and secure your future with HAP Properties.',
+}
 
 export default function RootLayout({ children }) {
-  return (
-    <html lang="en">
-      <body className={`${urbanist.variable} font-sans antialiased`}>
+    return (
+        <html lang="en">
+        <body className="min-h-screen flex flex-col font-body text-dark-800 bg-white">
         {children}
-      </body>
-    </html>
-  );
+        </body>
+        </html>
+    )
 }
