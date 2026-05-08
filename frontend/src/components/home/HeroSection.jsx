@@ -1,10 +1,21 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { COMPANY } from '@/lib/constants'
 
 export default function HeroSection() {
+    const [user, setUser] = useState(null)
+
+    useEffect(() => {
+        // Sync user state with localStorage
+        const storedUser = localStorage.getItem('user')
+        if (storedUser) {
+            setUser(JSON.parse(storedUser))
+        }
+    }, [])
+
     return (
         <section className="relative min-h-screen flex items-center justify-center text-center overflow-hidden bg-slate-950 font-heading">
 
@@ -14,13 +25,11 @@ export default function HeroSection() {
                     initial={{ scale: 1.1 }}
                     animate={{ scale: 1 }}
                     transition={{ duration: 12, ease: "easeOut" }}
-                    /* FIXED PATH: Removed 'public' and added leading slash */
                     src="/land-1.jpg"
                     alt="Hero Backdrop"
                     className="w-full h-full object-cover opacity-80"
                 />
 
-                {/* Gradient Overlays for that Cool Professional Look */}
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-transparent to-slate-950" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_20%,#020617_90%)] opacity-40" />
             </div>
@@ -65,7 +74,7 @@ export default function HeroSection() {
                     Built on trust, verified by experts, and delivered digitally.
                 </motion.p>
 
-                {/* CTA Buttons */}
+                {/* CTA Buttons - INTEGRATED ADMIN GLASSMORPHISM */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -79,12 +88,30 @@ export default function HeroSection() {
                         Explore Lands
                     </Link>
 
-                    <Link
-                        href="/register"
-                        className="bg-white/5 border border-white/10 hover:border-emerald-500/50 text-white font-semibold px-10 py-4 rounded-xl transition-all backdrop-blur-md"
-                    >
-                        Get Started
-                    </Link>
+                    {!user ? (
+                        <Link
+                            href="/register"
+                            className="bg-white/5 border border-white/10 hover:border-emerald-500/50 text-white font-semibold px-10 py-4 rounded-xl transition-all backdrop-blur-md"
+                        >
+                            Get Started
+                        </Link>
+                    ) : user.role === 'admin' ? (
+                        /* ADMIN LOGIN - GLASSMORPHISM RED/ORANGE */
+                        <Link
+                            href="/admin"
+                            className="bg-red-500/10 border border-red-500/50 text-red-500 font-bold px-10 py-4 rounded-xl transition-all backdrop-blur-md hover:bg-gradient-to-tr hover:from-red-600 hover:to-orange-500 hover:text-white shadow-[0_0_20px_rgba(239,68,68,0.2)] shadow-red-900/20 active:scale-95"
+                        >
+                            Admin Portal
+                        </Link>
+                    ) : (
+                        /* USER LOGIN - EMERALD GLASSMORPHISM */
+                        <Link
+                            href="/dashboard"
+                            className="bg-emerald-600/10 border border-emerald-500/50 text-emerald-400 font-bold px-10 py-4 rounded-xl transition-all backdrop-blur-md hover:bg-emerald-600 hover:text-white shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+                        >
+                            User Dashboard
+                        </Link>
+                    )}
                 </motion.div>
 
                 {/* Minimalist Trust Features */}
