@@ -882,7 +882,7 @@ Response:
 {
   "data": [
     {
-      "id": "notification-id",
+      "id": "notifications-id",
       "userId": "user-id",
       "title": "Payment confirmed",
       "message": "Your deposit payment has been confirmed.",

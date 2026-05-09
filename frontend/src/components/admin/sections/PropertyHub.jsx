@@ -149,7 +149,7 @@ function CreatePropertyForm() {
                     <AdminInput label="Base Price (₦)" placeholder="2500000" />
                 </div>
                 <div className="space-y-6">
-                    <AdminInput label="Plot Size" placeholder="e.g. 600sqm" />
+                     <AdminInput label="Plot Size" placeholder="e.g. 600sqm" />
                     <div className="space-y-3">
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">Overview / Description</label>
                         <textarea rows="5" className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-700" placeholder="Enter property details..." />

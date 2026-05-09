@@ -1,210 +1,218 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
 import {
-    Briefcase,
-    Bookmark,
-    CreditCard,
-    FileText,
+    TrendingUp,
     ShieldCheck,
+    Clock,
+    ArrowUpRight,
     Wallet,
-    CalendarClock,
-    Scale,
-    Settings,
-    HelpCircle,
-    LogOut
+    MapPin,
+    LayoutGrid,
+    Activity,
+    PlusCircle,
+    FileText,
+    Headset,
+    CreditCard,
+    ArrowRight,
+    Calendar,
+    Bookmark
 } from 'lucide-react'
-import Navbar from '@/components/layout/Navbar'
 
-// Sub-components
-import PortfolioTab from '@/components/dashboard/PortfolioTab'
-import SavedTab from '@/components/dashboard/SavedTab'
-import PaymentsTab from '@/components/dashboard/PaymentsTab'
-import DocumentsTab from '@/components/dashboard/DocumentsTab'
-import SettingsTab from '@/components/dashboard/SettingsTab' // Ensure this is created
+export default function DashboardHome() {
+    const [wishlist, setWishlist] = useState([])
 
-const API_BASE_URL = 'http://localhost:5000/api'
-
-const StatCard = ({ icon: Icon, label, value, unit, color }) => (
-    <div className="bg-white/5 backdrop-blur-md border border-white/10 p-8 rounded-[2.5rem] flex-1 flex flex-col justify-between min-h-[220px] group hover:border-emerald-500/30 transition-all duration-500">
-        <div className="flex items-start justify-between">
-            <div className="space-y-2">
-                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">
-                    {label}
-                </p>
-                <div className={`h-1 w-6 rounded-full bg-emerald-500/40 group-hover:w-10 transition-all duration-500`} />
-            </div>
-            <div className="p-3 rounded-2xl bg-white/5 border border-white/10 group-hover:bg-emerald-500/10 group-hover:border-emerald-500/20 transition-colors">
-                <Icon className="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition-colors" />
-            </div>
-        </div>
-
-        <div className="mt-auto">
-            <p className="text-4xl font-medium tracking-tight text-slate-100 flex items-baseline">
-                {unit === '₦' && (
-                    <span className="text-slate-500 text-xl mr-1.5 font-light">₦</span>
-                )}
-                {value?.toLocaleString() || '0'}
-                {unit === ' docs' && (
-                    <span className="text-xs text-slate-500 ml-2 uppercase tracking-[0.2em] font-bold">
-                        {unit}
-                    </span>
-                )}
-            </p>
-        </div>
-    </div>
-)
-
-export default function InvestorTerminal() {
-    const [activeTab, setActiveTab] = useState('portfolio')
-    const [user, setUser] = useState(null)
-    const [summary, setSummary] = useState(null)
-    const [loading, setLoading] = useState(true)
-
+    // Sync with your homepage 'wishlist' logic
     useEffect(() => {
-        const storedUser = localStorage.getItem('user')
-        const storedToken = localStorage.getItem('token')
-
-        if (storedUser) {
-            setUser(JSON.parse(storedUser))
-            const fetchSummary = async () => {
-                try {
-                    const res = await fetch(`${API_BASE_URL}/dashboard/summary`, {
-                        headers: { 'Authorization': `Bearer ${storedToken}` }
-                    })
-                    const json = await res.json()
-                    if (json.summary) setSummary(json.summary)
-                } catch (err) {
-                    console.error("Dashboard fetch error:", err)
-                } finally {
-                    setLoading(false)
-                }
-            }
-            if (storedToken) fetchSummary()
-        } else {
-            setLoading(false)
-        }
+        const storedWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]')
+        setWishlist(storedWishlist)
     }, [])
 
-    const handleLogout = () => {
-        localStorage.clear()
-        window.location.href = '/login'
-    }
-
-    const tabs = [
-        { id: 'portfolio', label: 'Holdings', icon: Briefcase },
-        { id: 'saved', label: 'Watchlist', icon: Bookmark },
-        { id: 'payments', label: 'Transactions', icon: CreditCard },
-        { id: 'documents', label: 'Legal Vault', icon: FileText }
-    ]
-
     return (
-        <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-emerald-500/30 overflow-x-hidden">
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-emerald-600/5 blur-[140px] rounded-full" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/5 blur-[120px] rounded-full" />
+        <div className="space-y-10 pb-20">
+
+            {/* --- SECTION 1: THE WEALTH OVERVIEW --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                {/* Main Portfolio Card */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="lg:col-span-2 p-10 rounded-[3rem] bg-gradient-to-br from-emerald-600 to-teal-800 relative overflow-hidden group shadow-2xl shadow-emerald-950/20"
+                >
+                    <div className="relative z-10 h-full flex flex-col justify-between">
+                        <div className="flex justify-between items-start">
+                            <div className="space-y-1 text-left">
+                                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-200/60">Portfolio Valuation</p>
+                                <h2 className="text-5xl md:text-7xl font-black italic tracking-tighter text-white">
+                                    ₦45.8M<span className="text-2xl opacity-50">.00</span>
+                                </h2>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 text-emerald-300" />
+                                <span className="text-[10px] font-black text-white">+12.4%</span>
+                            </div>
+                        </div>
+
+                        <div className="mt-12 flex flex-wrap gap-4">
+                            <Link
+                                href="/properties"
+                                className="bg-white text-emerald-950 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-transform flex items-center gap-2 shadow-xl"
+                            >
+                                New Acquisition <PlusCircle className="w-4 h-4" />
+                            </Link>
+                            <Link
+                                href="/dashboard/payments"
+                                className="bg-emerald-500/20 backdrop-blur-md border border-emerald-400/30 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500/30 transition-all flex items-center gap-2"
+                            >
+                                Continue Payment <ArrowRight className="w-4 h-4" />
+                            </Link>
+                        </div>
+                    </div>
+                    <Activity className="absolute -bottom-10 -right-10 w-64 h-64 text-white/5 rotate-12" />
+                </motion.div>
+
+                {/* Quick Action Side Panel */}
+                <div className="grid grid-cols-1 gap-4">
+                    <ActionButton icon={<CreditCard />} label="Pay Installment" color="emerald" href="/dashboard/payments" />
+                    <ActionButton icon={<FileText />} label="View Documents" color="slate" href="/dashboard/documents" />
+                    <ActionButton icon={<Headset />} label="Contact Support" color="slate" href="/dashboard/support" />
+                </div>
             </div>
 
-            <Navbar />
+            {/* --- SECTION 2: SUMMARY METRICS --- */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 text-left">
+                <SummaryCard label="Active Purchases" value="03" sub="Lands" icon={<MapPin />} />
+                <SummaryCard label="Amount Paid" value="₦33.6M" sub="78% Total" icon={<Wallet />} />
+                <SummaryCard label="Outstanding" value="₦12.2M" sub="Balance" icon={<Activity />} />
+                <SummaryCard label="Documents" value="12" sub="Verified" icon={<ShieldCheck />} />
+                <SummaryCard label="Next Payment" value="May 12" sub="₦1,250,000" icon={<Calendar />} isAlert />
+            </div>
 
-            <main className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-24">
+            {/* --- SECTION 3: RECENT ACTIVITY & WATCHLIST --- */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                <div className="xl:col-span-2 space-y-10">
 
-                {/* --- HEADER WITH IDENTITY & ACTIONS --- */}
-                <header className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
-                    <div>
-                        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-3 mb-4">
-                            <ShieldCheck className="text-emerald-500 w-4 h-4" />
-                            <span className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.5em]">Encrypted Investor Node</span>
-                        </motion.div>
-                        <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-5xl md:text-7xl font-black tracking-tighter leading-none">
-                            Investor <span className="text-slate-800">Terminal</span>
-                        </motion.h1>
+                    {/* Active Asset Strip */}
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between px-2">
+                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-500">Active Asset Strip</h3>
+                            <Link href="/dashboard/lands" className="text-[10px] font-black uppercase text-emerald-500 hover:underline underline-offset-4">Vault View</Link>
+                        </div>
+                        <AssetStrip
+                            name="Heaven Ark Phase 2"
+                            location="Epe, Lagos"
+                            image="/land-1.jpg"
+                            status="₦2,500,000 / ₦5.0M"
+                            statusLabel="Paid Status"
+                        />
                     </div>
 
-                    <div className="flex items-center gap-6">
-                        {/* SYSTEM ACTIONS */}
-                        <div className="flex items-center gap-2">
-                            <button title="Support" className="p-4 bg-white/5 rounded-2xl border border-white/10 text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-all">
-                                <HelpCircle className="w-5 h-5" />
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('settings')}
-                                className={`p-4 rounded-2xl border transition-all ${activeTab === 'settings' ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
-                            >
-                                <Settings className="w-5 h-5" />
-                            </button>
+                    {/* WATCHLIST SECTION */}
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between px-2">
+                            <div className="flex items-center gap-3">
+                                <Bookmark className="w-4 h-4 text-amber-500" />
+                                <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-500">Live Watchlist</h3>
+                            </div>
                         </div>
 
-                        {/* AUTH CARD */}
-                        <div className="flex items-center gap-4 bg-white/5 backdrop-blur-3xl border border-white/10 p-3 rounded-[2rem] pr-8 shadow-2xl relative group">
-                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-500/20">
-                                {user?.fullName?.charAt(0)}
-                            </div>
-                            <div>
-                                <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Authenticated</p>
-                                <p className="text-lg font-bold tracking-tight">{user?.fullName}</p>
-                            </div>
-                            <button onClick={handleLogout} className="absolute -top-2 -right-2 p-2 bg-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                                <LogOut className="w-3 h-3 text-white" />
-                            </button>
+                        <div className="space-y-4">
+                            {wishlist.length > 0 ? (
+                                wishlist.map((land) => (
+                                    <AssetStrip
+                                        key={land.id}
+                                        name={land.title}
+                                        location={land.location}
+                                        image={land.image}
+                                        status={`₦${land.price.toLocaleString()}`}
+                                        statusLabel="Market Price"
+                                        isWatchlist
+                                        id={land.id}
+                                    />
+                                ))
+                            ) : (
+                                <div className="p-12 rounded-[2.5rem] border border-dashed border-white/10 flex flex-col items-center justify-center text-center opacity-30">
+                                    <Bookmark className="w-6 h-6 mb-2 text-slate-500" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Watchlist is currently empty</p>
+                                </div>
+                            )}
                         </div>
                     </div>
-                </header>
+                </div>
 
-                {/* --- STATS SECTION --- */}
-                <section className="mb-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {loading ? (
-                        [...Array(4)].map((_, i) => (
-                            <div key={i} className="h-[220px] rounded-[2.5rem] bg-white/5 animate-pulse border border-white/5" />
-                        ))
-                    ) : (
-                        <>
-                            <StatCard icon={Wallet} label="Total Investment" value={summary?.totalPaid} unit="₦" color="emerald" />
-                            <StatCard icon={CreditCard} label="Outstanding Balance" value={summary?.outstandingBalance} unit="₦" color="blue" />
-                            <StatCard icon={CalendarClock} label="Next Payment" value={summary?.nextPaymentDue?.amount} unit="₦" color="amber" />
-                            <StatCard icon={Scale} label="Documents Secured" value={summary?.documentsAvailable} unit=" docs" color="teal" />
-                        </>
-                    )}
-                </section>
-
-                {/* --- TAB NAVIGATION --- */}
-                <div className="flex flex-wrap gap-3 mb-12 p-2 bg-white/5 border border-white/5 rounded-[2.5rem] w-fit backdrop-blur-md">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                                activeTab === tab.id
-                                    ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/20'
-                                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                            }`}
-                        >
-                            <tab.icon className="w-4 h-4" />
-                            {tab.label}
+                {/* Sidebar: Support Concierge */}
+                <div className="bg-white/5 border border-white/10 rounded-[3rem] p-8 h-fit text-left">
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-500 mb-6">Support Concierge</h3>
+                    <div className="space-y-4">
+                        <p className="text-xs text-slate-400 leading-relaxed italic">Need help with your allocation or payments?</p>
+                        <button className="w-full py-4 rounded-2xl bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-900/20">
+                            Start Live Chat
                         </button>
-                    ))}
+                    </div>
                 </div>
-
-                {/* --- TAB VIEWPORT --- */}
-                <div className="min-h-[50vh]">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={activeTab}
-                            initial={{ opacity: 0, y: 15 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -15 }}
-                            transition={{ duration: 0.25 }}
-                        >
-                            {activeTab === 'portfolio' && <PortfolioTab />}
-                            {activeTab === 'saved' && <SavedTab />}
-                            {activeTab === 'payments' && <PaymentsTab />}
-                            {activeTab === 'documents' && <DocumentsTab />}
-                            {activeTab === 'settings' && <SettingsTab />}
-                        </motion.div>
-                    </AnimatePresence>
-                </div>
-            </main>
+            </div>
         </div>
+    )
+}
+
+/* --- REUSABLE SUB-COMPONENTS --- */
+
+function AssetStrip({ name, location, image, status, statusLabel, isWatchlist, id }) {
+    return (
+        <div className="bg-white/5 border border-white/5 rounded-[2.5rem] p-4 flex items-center gap-6 group hover:border-emerald-500/30 transition-all text-left">
+            <div className="w-20 h-20 rounded-2xl bg-slate-800 overflow-hidden relative shrink-0">
+                <img src={image || "/land-1.jpg"} className="w-full h-full object-cover opacity-40 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <div className="flex-1 min-w-0">
+                <h4 className="text-lg font-bold text-white italic truncate">{name}</h4>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                    <MapPin className="w-3 h-3 text-emerald-500" /> {location}
+                </p>
+            </div>
+            <div className="text-right hidden md:block px-4">
+                <p className="text-[9px] font-black text-slate-600 uppercase">{statusLabel}</p>
+                <p className={`text-sm font-bold ${isWatchlist ? 'text-amber-500' : 'text-emerald-500'}`}>{status}</p>
+            </div>
+            <Link href={isWatchlist ? `/properties/${id}` : "/dashboard/lands"} className="p-4 rounded-2xl bg-white/5 text-slate-500 hover:text-white hover:bg-emerald-500 transition-all">
+                <ArrowUpRight className="w-4 h-4" />
+            </Link>
+        </div>
+    )
+}
+
+function SummaryCard({ label, value, sub, icon, isAlert }) {
+    return (
+        <div className={`p-6 rounded-[2.5rem] border backdrop-blur-md transition-all hover:scale-105 ${
+            isAlert ? 'bg-amber-500/10 border-amber-500/20' : 'bg-white/5 border-white/5'
+        }`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${
+                isAlert ? 'bg-amber-500/20 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'
+            }`}>
+                {icon}
+            </div>
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">{label}</p>
+            <h4 className={`text-xl font-black italic tracking-tighter ${isAlert ? 'text-amber-200' : 'text-white'}`}>{value}</h4>
+            <p className="text-[9px] font-bold text-slate-600 uppercase mt-1">{sub}</p>
+        </div>
+    )
+}
+
+function ActionButton({ icon, label, color, href }) {
+    const isEmerald = color === 'emerald'
+    return (
+        <Link href={href} className={`flex items-center gap-4 p-5 rounded-[2rem] border transition-all group ${
+            isEmerald
+                ? 'bg-emerald-500 text-white border-emerald-400 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]'
+                : 'bg-white/5 text-slate-400 border-white/5 hover:border-white/20 hover:text-white'
+        }`}>
+            <div className={`p-3 rounded-xl ${isEmerald ? 'bg-white/20' : 'bg-white/5'}`}>
+                {icon}
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+            <ArrowUpRight className="ml-auto w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" />
+        </Link>
     )
 }
