@@ -1,0 +1,28 @@
+{
+  "name": "hap-web-app-backend",
+  "version": "1.0.0",
+  "description": "Fastify backend for hap-web-app.",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon --watch src --ext js,json src/server.js",
+    "start": "node src/server.js",
+    "seed": "node src/seed/seed.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.1",
+    "@fastify/sensible": "^6.0.2",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "fastify-plugin": "^5.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
