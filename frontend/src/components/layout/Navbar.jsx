@@ -82,7 +82,7 @@ export default function Navbar() {
                                 href="/register"
                                 className="text-[10px] text-white bg-emerald-600 px-6 py-3 rounded-xl font-black uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-lg active:scale-95"
                             >
-                                Get Started
+                               Create Account
                             </Link>
                         </>
                     ) : (

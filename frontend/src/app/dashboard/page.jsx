@@ -1,218 +1,723 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import {
-    TrendingUp,
-    ShieldCheck,
-    Clock,
+    RefreshCw,
     ArrowUpRight,
+    Clock3,
+    CheckCircle2,
+    Landmark,
     Wallet,
-    MapPin,
-    LayoutGrid,
-    Activity,
-    PlusCircle,
-    FileText,
-    Headset,
-    CreditCard,
-    ArrowRight,
-    Calendar,
-    Bookmark
+    CalendarRange
 } from 'lucide-react'
 
-export default function DashboardHome() {
-    const [wishlist, setWishlist] = useState([])
+import { formatCurrency } from '@/lib/utils'
+import { dashboardAPI, purchasesAPI } from '@/lib/api/client'
 
-    // Sync with your homepage 'wishlist' logic
-    useEffect(() => {
-        const storedWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]')
-        setWishlist(storedWishlist)
+const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.08,
+            delayChildren: 0.08
+        }
+    }
+}
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 18 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            type: 'spring',
+            stiffness: 120,
+            damping: 18
+        }
+    }
+}
+
+export default function DashboardOverviewPage() {
+    const [summary, setSummary] = useState(null)
+    const [purchases, setPurchases] = useState([])
+    const [myPayments, setMyPayments] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [user, setUser] = useState(null)
+    const [refreshing, setRefreshing] = useState(false)
+
+    const loadAllData = useCallback(async (currentUser) => {
+        setRefreshing(true)
+
+        try {
+            const [summaryData, purchasesData] = await Promise.all([
+                dashboardAPI.getSummary().catch(() => ({})),
+                purchasesAPI.getMyPurchases().catch(() => ({})),
+            ])
+
+            setSummary(summaryData.summary)
+            setPurchases(purchasesData.data || [])
+        } catch (error) {
+            console.log('Fallback local portfolio sync activated')
+        }
+
+        const storedPurchases = localStorage.getItem('purchases')
+        const storedPayments = localStorage.getItem('payments')
+
+        if (currentUser?.email) {
+            const allPurchases = storedPurchases ? JSON.parse(storedPurchases) : []
+            const allPayments = storedPayments ? JSON.parse(storedPayments) : []
+
+            const userPurchases = allPurchases.filter(
+                p => p.buyerEmail === currentUser.email
+            )
+
+            const userPayments = allPayments.filter(
+                p => p.buyerEmail === currentUser.email
+            )
+
+            if (userPurchases.length > 0) setPurchases(userPurchases)
+            if (userPayments.length > 0) setMyPayments(userPayments)
+
+            const totalPaid = userPayments
+                .filter(p => p.status === 'verified')
+                .reduce(
+                    (sum, p) =>
+                        sum + (Number(p.amountPaid) || Number(p.amount) || 0),
+                    0
+                )
+
+            const totalRemaining = userPurchases.reduce(
+                (sum, p) => sum + (Number(p.remainingBalance) || 0),
+                0
+            )
+
+            setSummary(prev => ({
+                ...prev,
+                totalPaid,
+                outstandingBalance: totalRemaining,
+                activePurchases: userPurchases.length,
+                pendingPayments: userPayments.filter(
+                    p => p.status === 'pending'
+                ).length
+            }))
+        }
+
+        setLoading(false)
+        setRefreshing(false)
     }, [])
 
-    return (
-        <div className="space-y-10 pb-20">
+    useEffect(() => {
+        const userData = localStorage.getItem('user')
 
-            {/* --- SECTION 1: THE WEALTH OVERVIEW --- */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        if (userData) {
+            const parsedUser = JSON.parse(userData)
+            setUser(parsedUser)
+            loadAllData(parsedUser)
+        }
+    }, [loadAllData])
 
-                {/* Main Portfolio Card */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="lg:col-span-2 p-10 rounded-[3rem] bg-gradient-to-br from-emerald-600 to-teal-800 relative overflow-hidden group shadow-2xl shadow-emerald-950/20"
-                >
-                    <div className="relative z-10 h-full flex flex-col justify-between">
-                        <div className="flex justify-between items-start">
-                            <div className="space-y-1 text-left">
-                                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-200/60">Portfolio Valuation</p>
-                                <h2 className="text-5xl md:text-7xl font-black italic tracking-tighter text-white">
-                                    ₦45.8M<span className="text-2xl opacity-50">.00</span>
-                                </h2>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 text-emerald-300" />
-                                <span className="text-[10px] font-black text-white">+12.4%</span>
-                            </div>
-                        </div>
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const userData = localStorage.getItem('user')
 
-                        <div className="mt-12 flex flex-wrap gap-4">
-                            <Link
-                                href="/properties"
-                                className="bg-white text-emerald-950 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-transform flex items-center gap-2 shadow-xl"
-                            >
-                                New Acquisition <PlusCircle className="w-4 h-4" />
-                            </Link>
-                            <Link
-                                href="/dashboard/payments"
-                                className="bg-emerald-500/20 backdrop-blur-md border border-emerald-400/30 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500/30 transition-all flex items-center gap-2"
-                            >
-                                Continue Payment <ArrowRight className="w-4 h-4" />
-                            </Link>
-                        </div>
-                    </div>
-                    <Activity className="absolute -bottom-10 -right-10 w-64 h-64 text-white/5 rotate-12" />
-                </motion.div>
+            if (userData) {
+                loadAllData(JSON.parse(userData))
+            }
+        }, 15000)
 
-                {/* Quick Action Side Panel */}
-                <div className="grid grid-cols-1 gap-4">
-                    <ActionButton icon={<CreditCard />} label="Pay Installment" color="emerald" href="/dashboard/payments" />
-                    <ActionButton icon={<FileText />} label="View Documents" color="slate" href="/dashboard/documents" />
-                    <ActionButton icon={<Headset />} label="Contact Support" color="slate" href="/dashboard/support" />
+        return () => clearInterval(interval)
+    }, [loadAllData])
+
+    const handleRefresh = () => {
+        const userData = localStorage.getItem('user')
+
+        if (userData) {
+            loadAllData(JSON.parse(userData))
+        }
+    }
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#020617] flex items-center justify-center text-white">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-9 h-9 border border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" />
+                    <p className="text-sm text-slate-400 tracking-wide">
+                        Loading portfolio...
+                    </p>
                 </div>
             </div>
+        )
+    }
 
-            {/* --- SECTION 2: SUMMARY METRICS --- */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 text-left">
-                <SummaryCard label="Active Purchases" value="03" sub="Lands" icon={<MapPin />} />
-                <SummaryCard label="Amount Paid" value="₦33.6M" sub="78% Total" icon={<Wallet />} />
-                <SummaryCard label="Outstanding" value="₦12.2M" sub="Balance" icon={<Activity />} />
-                <SummaryCard label="Documents" value="12" sub="Verified" icon={<ShieldCheck />} />
-                <SummaryCard label="Next Payment" value="May 12" sub="₦1,250,000" icon={<Calendar />} isAlert />
-            </div>
+    const totalInvested = purchases.reduce(
+        (sum, p) => sum + (Number(p.totalPrice) || 0),
+        0
+    )
 
-            {/* --- SECTION 3: RECENT ACTIVITY & WATCHLIST --- */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                <div className="xl:col-span-2 space-y-10">
+    const totalPaidAmount = myPayments
+        .filter(
+            p =>
+                p.status === 'verified' ||
+                p.status === 'approved' ||
+                p.status === 'success'
+        )
+        .reduce(
+            (sum, p) =>
+                sum + (Number(p.amountPaid) || Number(p.amount) || 0),
+            0
+        )
 
-                    {/* Active Asset Strip */}
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between px-2">
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-500">Active Asset Strip</h3>
-                            <Link href="/dashboard/lands" className="text-[10px] font-black uppercase text-emerald-500 hover:underline underline-offset-4">Vault View</Link>
-                        </div>
-                        <AssetStrip
-                            name="Heaven Ark Phase 2"
-                            location="Epe, Lagos"
-                            image="/land-1.jpg"
-                            status="₦2,500,000 / ₦5.0M"
-                            statusLabel="Paid Status"
-                        />
+    const totalPendingAmount = myPayments
+        .filter(p => p.status === 'pending')
+        .reduce(
+            (sum, p) =>
+                sum + (Number(p.amountPaid) || Number(p.amount) || 0),
+            0
+        )
+
+    const outstandingRemainderAmount = Math.max(
+        0,
+        totalInvested - totalPaidAmount
+    )
+
+    return (
+        <div className="min-h-screen bg-[#020617] text-white relative overflow-hidden selection:bg-emerald-500/20">
+
+            {/* Ambient Glow */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.08),transparent_35%)] pointer-events-none" />
+
+            {/* Header */}
+            <header className="sticky top-0 z-50 backdrop-blur-2xl bg-[#020617]/20 border-b border-white/5">
+                <div className="max-w-screen-2xl mx-auto px-6 md:px-10 py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+
+                    <div>
+                        <p className="text-sm text-slate-400 mb-2 tracking-wide">
+                            Portfolio Dashboard
+                        </p>
+
+                        <h1 className="text-3xl md:text-5xl font-semibold tracking-tight">
+                            Good evening,{' '}
+                            <span className="text-emerald-400">
+                                {user?.fullName?.split(' ')[0] || 'Investor'}
+                            </span>
+                        </h1>
                     </div>
 
-                    {/* WATCHLIST SECTION */}
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between px-2">
-                            <div className="flex items-center gap-3">
-                                <Bookmark className="w-4 h-4 text-amber-500" />
-                                <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-500">Live Watchlist</h3>
-                            </div>
-                        </div>
+                    <div className="flex items-center gap-4">
 
-                        <div className="space-y-4">
-                            {wishlist.length > 0 ? (
-                                wishlist.map((land) => (
-                                    <AssetStrip
-                                        key={land.id}
-                                        name={land.title}
-                                        location={land.location}
-                                        image={land.image}
-                                        status={`₦${land.price.toLocaleString()}`}
-                                        statusLabel="Market Price"
-                                        isWatchlist
-                                        id={land.id}
-                                    />
-                                ))
+                        <button
+                            onClick={handleRefresh}
+                            disabled={refreshing}
+                            className="
+                                h-11 px-5 rounded-2xl
+                                bg-white/[0.04]
+                                hover:bg-white/[0.08]
+                                border border-white/10
+                                text-sm font-medium
+                                transition-all duration-300
+                                flex items-center gap-2
+                                disabled:opacity-50
+                            "
+                        >
+                            <RefreshCw
+                                className={`w-4 h-4 text-emerald-400 ${
+                                    refreshing ? 'animate-spin' : ''
+                                }`}
+                            />
+                            Refresh
+                        </button>
+
+                        <div className="hidden sm:block text-right">
+                            <p className="text-xs text-slate-500 mb-1">
+                                Local Time
+                            </p>
+
+                            <p className="text-sm font-medium tabular-nums text-slate-200">
+                                {new Date().toLocaleTimeString('en-NG', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}{' '}
+                                WAT
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div className="max-w-screen-2xl mx-auto px-6 md:px-10 py-10 relative z-10">
+
+                <motion.div
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="show"
+                    className="grid grid-cols-1 lg:grid-cols-12 gap-8"
+                >
+
+                    {/* Main */}
+                    <div className="lg:col-span-8 space-y-8">
+
+                        {/* Hero */}
+                        <motion.div
+                            variants={itemVariants}
+                            className="
+                                relative overflow-hidden
+                                rounded-3xl
+                                bg-white/[0.03]
+                                border border-white/[0.06]
+                                backdrop-blur-xl
+                                p-8 md:p-10
+                                shadow-[0_20px_80px_rgba(0,0,0,0.35)]
+                            "
+                        >
+
+                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none rounded-3xl" />
+
+                            <div className="relative z-10">
+
+                                <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
+
+                                    <div>
+                                        <p className="text-sm text-slate-400 tracking-wide mb-3">
+                                            Portfolio Value
+                                        </p>
+
+                                        <h2 className="text-5xl md:text-7xl font-semibold tracking-tight tabular-nums">
+                                            {formatCurrency(totalInvested)}
+                                        </h2>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 h-fit shadow-[0_8px_30px_rgba(16,185,129,0.12)]">
+                                        <ArrowUpRight className="w-4 h-4" />
+
+                                        <span className="text-sm font-medium">
+                                            Portfolio Active
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="mt-10 pt-6 border-t border-white/5">
+                                    <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
+                                        Overview of active investments, completed payments,
+                                        and outstanding balances across subscribed properties.
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* Stats */}
+                        <motion.div
+                            variants={itemVariants}
+                            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+                        >
+
+                            {/* Paid */}
+                            <div className="
+                                bg-white/[0.03]
+                                border border-white/[0.06]
+                                backdrop-blur-xl
+                                rounded-3xl
+                                p-7
+                                hover:bg-white/[0.05]
+                                hover:border-white/10
+                                transition-all duration-300
+                            ">
+                                <div className="flex items-start gap-4">
+
+                                    <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                                        <Wallet className="w-5 h-5" />
+                                    </div>
+
+                                    <div>
+                                        <p className="text-sm text-slate-400 mb-2">
+                                            Total Paid
+                                        </p>
+
+                                        <h3 className="text-2xl font-semibold tabular-nums">
+                                            {formatCurrency(totalPaidAmount)}
+                                        </h3>
+
+                                        <p className="text-sm text-emerald-400 mt-2">
+                                            Verified payments
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Pending */}
+                            <div className="
+                                bg-white/[0.03]
+                                border border-white/[0.06]
+                                backdrop-blur-xl
+                                rounded-3xl
+                                p-7
+                                hover:bg-white/[0.05]
+                                hover:border-white/10
+                                transition-all duration-300
+                            ">
+                                <div className="flex items-start gap-4">
+
+                                    <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                                        <Clock3 className="w-5 h-5" />
+                                    </div>
+
+                                    <div>
+                                        <p className="text-sm text-slate-400 mb-2">
+                                            Pending
+                                        </p>
+
+                                        <h3 className="text-2xl font-semibold tabular-nums">
+                                            {formatCurrency(totalPendingAmount)}
+                                        </h3>
+
+                                        <p className="text-sm text-amber-400 mt-2">
+                                            Awaiting confirmation
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Outstanding */}
+                            <div className="
+                                bg-white/[0.03]
+                                border border-white/[0.06]
+                                backdrop-blur-xl
+                                rounded-3xl
+                                p-7
+                                hover:bg-white/[0.05]
+                                hover:border-white/10
+                                transition-all duration-300
+                            ">
+                                <div className="flex items-start gap-4">
+
+                                    <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400">
+                                        <Landmark className="w-5 h-5" />
+                                    </div>
+
+                                    <div>
+                                        <p className="text-sm text-slate-400 mb-2">
+                                            Outstanding Balance
+                                        </p>
+
+                                        <h3 className="text-2xl font-semibold tabular-nums">
+                                            {formatCurrency(outstandingRemainderAmount)}
+                                        </h3>
+
+                                        <p className="text-sm text-red-400 mt-2">
+                                            Remaining balance
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* Properties */}
+                        <motion.div
+                            variants={itemVariants}
+                            className="space-y-5"
+                        >
+
+                            <div className="flex items-center justify-between">
+
+                                <div>
+                                    <h2 className="text-2xl font-semibold tracking-tight">
+                                        Active Properties
+                                    </h2>
+
+                                    <p className="text-sm text-slate-400 mt-1">
+                                        Track payment progress across investments
+                                    </p>
+                                </div>
+
+                                <Link
+                                    href="/properties"
+                                    className="text-sm text-emerald-400 hover:text-emerald-300 transition flex items-center gap-2"
+                                >
+                                    View Properties
+
+                                    <ArrowUpRight className="w-4 h-4" />
+                                </Link>
+                            </div>
+
+                            <AnimatePresence mode="popLayout">
+
+                                {purchases.length > 0 ? (
+                                    purchases.map((purchase, idx) => {
+
+                                        const paid = Number(
+                                            purchase.amountPaid ||
+                                            purchase.totalPaidSoFar ||
+                                            0
+                                        )
+
+                                        const total = Number(
+                                            purchase.totalPrice || 0
+                                        )
+
+                                        const progress =
+                                            total > 0
+                                                ? Math.round((paid / total) * 100)
+                                                : 0
+
+                                        return (
+                                            <motion.div
+                                                key={purchase.id || idx}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="
+                                                    bg-white/[0.03]
+                                                    border border-white/[0.06]
+                                                    backdrop-blur-xl
+                                                    rounded-3xl
+                                                    p-7 md:p-8
+                                                    hover:bg-white/[0.05]
+                                                    hover:border-white/10
+                                                    transition-all duration-300
+                                                    shadow-[0_20px_80px_rgba(0,0,0,0.25)]
+                                                "
+                                            >
+
+                                                <div className="flex flex-col xl:flex-row gap-8 xl:items-center justify-between">
+
+                                                    <div className="flex-1">
+
+                                                        <h3 className="text-xl font-semibold tracking-tight mb-4">
+                                                            {purchase.propertyTitle}
+                                                        </h3>
+
+                                                        <div className="flex flex-wrap items-center gap-3">
+
+                                                            <span className="
+                                                                text-[10px]
+                                                                font-medium
+                                                                rounded-full
+                                                                px-3 py-1
+                                                                bg-blue-500/10
+                                                                border border-blue-500/20
+                                                                text-blue-300
+                                                            ">
+                                                                {purchase.paymentMode || 'Installment'}
+                                                            </span>
+
+                                                            <span className={`
+                                                                text-[10px]
+                                                                font-medium
+                                                                rounded-full
+                                                                px-3 py-1
+                                                                border
+                                                                ${
+                                                                purchase.status === 'verified'
+                                                                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+                                                                    : 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                                                            }
+                                                            `}>
+                                                                {purchase.status}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="w-full xl:max-w-sm">
+
+                                                        <div className="flex items-center justify-between mb-3">
+
+                                                            <p className="text-sm text-slate-400">
+                                                                Payment Progress
+                                                            </p>
+
+                                                            <p className="text-sm font-medium text-emerald-400">
+                                                                {progress}%
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                                                            <div
+                                                                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-300 transition-all duration-1000"
+                                                                style={{
+                                                                    width: `${progress}%`
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="xl:w-64 shrink-0">
+
+                                                        <h4 className="text-2xl font-semibold mb-1 tabular-nums">
+                                                            {formatCurrency(paid)}
+                                                        </h4>
+
+                                                        {Number(
+                                                            purchase.remainingBalance
+                                                        ) > 0 ? (
+                                                            <>
+                                                                <p className="text-sm text-red-400 mb-5">
+                                                                    {formatCurrency(
+                                                                        purchase.remainingBalance
+                                                                    )}{' '}
+                                                                    remaining
+                                                                </p>
+
+                                                                <Link
+                                                                    href={`/purchase/${purchase.propertyId}?continue=${purchase.id}`}
+                                                                    className="
+                                                                        inline-flex items-center justify-center
+                                                                        h-12 px-6 rounded-2xl
+                                                                        bg-emerald-500 hover:bg-emerald-400
+                                                                        text-sm font-medium
+                                                                        transition-all duration-300
+                                                                        shadow-[0_10px_40px_rgba(16,185,129,0.15)]
+                                                                    "
+                                                                >
+                                                                    Complete Payment
+                                                                </Link>
+                                                            </>
+                                                        ) : (
+                                                            <div className="flex items-center gap-2 text-emerald-400 font-medium mt-3">
+                                                                <CheckCircle2 className="w-4 h-4" />
+                                                                Payment Complete
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )
+                                    })
+                                ) : (
+                                    <div className="
+                                        bg-white/[0.03]
+                                        border border-dashed border-white/10
+                                        backdrop-blur-xl
+                                        rounded-3xl
+                                        py-20 px-8 text-center
+                                    ">
+                                        <div className="text-5xl mb-5">
+                                            🏡
+                                        </div>
+
+                                        <h3 className="text-2xl font-semibold mb-3">
+                                            No active investments
+                                        </h3>
+
+                                        <p className="text-slate-400 mb-6">
+                                            Explore available properties and begin building your portfolio.
+                                        </p>
+
+                                        <Link
+                                            href="/properties"
+                                            className="text-emerald-400 hover:text-emerald-300 transition"
+                                        >
+                                            Browse Properties →
+                                        </Link>
+                                    </div>
+                                )}
+                            </AnimatePresence>
+                        </motion.div>
+                    </div>
+
+                    {/* Sidebar */}
+                    <motion.div
+                        variants={itemVariants}
+                        className="lg:col-span-4"
+                    >
+
+                        <div className="
+                            sticky top-28
+                            bg-white/[0.03]
+                            border border-white/[0.06]
+                            backdrop-blur-xl
+                            rounded-3xl
+                            p-7
+                            shadow-[0_20px_80px_rgba(0,0,0,0.35)]
+                        ">
+
+                            <div className="flex items-center justify-between pb-5 border-b border-white/5 mb-6">
+
+                                <div>
+                                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                                        <CalendarRange className="w-5 h-5 text-emerald-400" />
+                                        Recent Transactions
+                                    </h3>
+
+                                    <p className="text-sm text-slate-400 mt-1">
+                                        Latest payment activity
+                                    </p>
+                                </div>
+
+                                <Link
+                                    href="/dashboard"
+                                    className="text-sm text-emerald-400 hover:text-emerald-300 transition"
+                                >
+                                    View All
+                                </Link>
+                            </div>
+
+                            {myPayments.length > 0 ? (
+
+                                <div className="space-y-4">
+
+                                    {myPayments.slice(0, 5).map((payment, idx) => (
+
+                                        <div
+                                            key={idx}
+                                            className="
+                                                p-5 rounded-2xl
+                                                bg-black/20
+                                                border border-white/5
+                                                hover:border-white/10
+                                                transition-all duration-300
+                                            "
+                                        >
+
+                                            <div className="flex items-start justify-between gap-4">
+
+                                                <div className="min-w-0">
+
+                                                    <p className="font-medium text-white truncate">
+                                                        {payment.propertyTitle || 'Property Payment'}
+                                                    </p>
+
+                                                    <p className="text-sm text-slate-400 mt-1">
+                                                        {formatCurrency(
+                                                            payment.amountPaid ||
+                                                            payment.amount
+                                                        )}
+                                                    </p>
+                                                </div>
+
+                                                <div className={`
+                                                    text-xs px-3 py-1 rounded-full border whitespace-nowrap
+                                                    ${
+                                                    payment.status === 'verified' ||
+                                                    payment.status === 'approved' ||
+                                                    payment.status === 'success'
+                                                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+                                                        : 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                                                }
+                                                `}>
+                                                    {
+                                                        payment.status === 'verified' ||
+                                                        payment.status === 'approved' ||
+                                                        payment.status === 'success'
+                                                            ? 'Completed'
+                                                            : 'Pending'
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             ) : (
-                                <div className="p-12 rounded-[2.5rem] border border-dashed border-white/10 flex flex-col items-center justify-center text-center opacity-30">
-                                    <Bookmark className="w-6 h-6 mb-2 text-slate-500" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Watchlist is currently empty</p>
+                                <div className="py-16 text-center">
+                                    <p className="text-slate-500">
+                                        No recent transactions
+                                    </p>
                                 </div>
                             )}
                         </div>
-                    </div>
-                </div>
-
-                {/* Sidebar: Support Concierge */}
-                <div className="bg-white/5 border border-white/10 rounded-[3rem] p-8 h-fit text-left">
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-500 mb-6">Support Concierge</h3>
-                    <div className="space-y-4">
-                        <p className="text-xs text-slate-400 leading-relaxed italic">Need help with your allocation or payments?</p>
-                        <button className="w-full py-4 rounded-2xl bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-900/20">
-                            Start Live Chat
-                        </button>
-                    </div>
-                </div>
+                    </motion.div>
+                </motion.div>
             </div>
         </div>
-    )
-}
-
-/* --- REUSABLE SUB-COMPONENTS --- */
-
-function AssetStrip({ name, location, image, status, statusLabel, isWatchlist, id }) {
-    return (
-        <div className="bg-white/5 border border-white/5 rounded-[2.5rem] p-4 flex items-center gap-6 group hover:border-emerald-500/30 transition-all text-left">
-            <div className="w-20 h-20 rounded-2xl bg-slate-800 overflow-hidden relative shrink-0">
-                <img src={image || "/land-1.jpg"} className="w-full h-full object-cover opacity-40 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <div className="flex-1 min-w-0">
-                <h4 className="text-lg font-bold text-white italic truncate">{name}</h4>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                    <MapPin className="w-3 h-3 text-emerald-500" /> {location}
-                </p>
-            </div>
-            <div className="text-right hidden md:block px-4">
-                <p className="text-[9px] font-black text-slate-600 uppercase">{statusLabel}</p>
-                <p className={`text-sm font-bold ${isWatchlist ? 'text-amber-500' : 'text-emerald-500'}`}>{status}</p>
-            </div>
-            <Link href={isWatchlist ? `/properties/${id}` : "/dashboard/lands"} className="p-4 rounded-2xl bg-white/5 text-slate-500 hover:text-white hover:bg-emerald-500 transition-all">
-                <ArrowUpRight className="w-4 h-4" />
-            </Link>
-        </div>
-    )
-}
-
-function SummaryCard({ label, value, sub, icon, isAlert }) {
-    return (
-        <div className={`p-6 rounded-[2.5rem] border backdrop-blur-md transition-all hover:scale-105 ${
-            isAlert ? 'bg-amber-500/10 border-amber-500/20' : 'bg-white/5 border-white/5'
-        }`}>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${
-                isAlert ? 'bg-amber-500/20 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'
-            }`}>
-                {icon}
-            </div>
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">{label}</p>
-            <h4 className={`text-xl font-black italic tracking-tighter ${isAlert ? 'text-amber-200' : 'text-white'}`}>{value}</h4>
-            <p className="text-[9px] font-bold text-slate-600 uppercase mt-1">{sub}</p>
-        </div>
-    )
-}
-
-function ActionButton({ icon, label, color, href }) {
-    const isEmerald = color === 'emerald'
-    return (
-        <Link href={href} className={`flex items-center gap-4 p-5 rounded-[2rem] border transition-all group ${
-            isEmerald
-                ? 'bg-emerald-500 text-white border-emerald-400 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]'
-                : 'bg-white/5 text-slate-400 border-white/5 hover:border-white/20 hover:text-white'
-        }`}>
-            <div className={`p-3 rounded-xl ${isEmerald ? 'bg-white/20' : 'bg-white/5'}`}>
-                {icon}
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
-            <ArrowUpRight className="ml-auto w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" />
-        </Link>
     )
 }

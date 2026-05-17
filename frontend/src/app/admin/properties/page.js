@@ -1,255 +1,256 @@
 'use client'
 
-import React, { useState } from 'react'
-import {
-    Plus, Search, MoreVertical, MapPin,
-    Trash2, Edit3, CheckCircle2, Bookmark, Ban, EyeOff
-} from 'lucide-react'
-import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Plus, MapPin, Database, Trash2, Edit3, ShieldAlert, Loader2, AlertTriangle, EyeOff } from 'lucide-react'
+import { propertiesAPI, adminAPI } from '@/lib/api/client'
+import AddPropertyForm from '@/components/admin/AddPropertyForm'
 
-export default function PropertyManager() {
-    const [activeMenu, setActiveMenu] = useState(null)
-    const [searchTerm, setSearchTerm] = useState('')
-    const [filterStatus, setFilterStatus] = useState('All')
+export default function AdminPropertyPage() {
+    const [properties, setProperties] = useState([])
+    const [loadingData, setLoadingData] = useState(true)
+    const [isFormOpen, setIsFormOpen] = useState(false)
+    const [updatingId, setUpdatingId] = useState(null)
+    const [editingProperty, setEditingProperty] = useState(null)
+    const [user, setUser] = useState(null)
 
-    const [properties, setProperties] = useState([
-        { id: 'HA-P1-01', title: 'Heaven Ark Phase 1', city: 'Epe', status: 'Available', price: '₦5.5M', image: 'https://images.unsplash.com/photo-1500382017468-9049fee74a62?auto=format&fit=crop&q=80&w=800' },
-        { id: 'HA-P2-04', title: 'Heritage Extension', city: 'Ibeju', status: 'Reserved', price: '₦12.5M', image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=800' },
-        { id: 'HA-P3-09', title: 'The Palms Estate', city: 'Lekki', status: 'Sold Out', price: '₦45M', image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800' }
-    ])
-
-    const filteredProperties = properties.filter(prop => {
-        const matchesSearch = prop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            prop.city.toLowerCase().includes(searchTerm.toLowerCase())
-        const matchesFilter = filterStatus === 'All' || prop.status === filterStatus
-        return matchesSearch && matchesFilter
+    const [deleteModal, setDeleteModal] = useState({
+        isOpen: false,
+        propertyId: null,
+        propertyTitle: ''
     })
 
-    const updateStatus = (id, newStatus) => {
-        setProperties(properties.map(p => p.id === id ? { ...p, status: newStatus } : p))
-        setActiveMenu(null)
-    }
-
-    const deleteProperty = (id) => {
-        if (confirm("Permanently delete this land?")) {
-            setProperties(properties.filter(p => p.id !== id))
+    // Check auth on mount
+    useEffect(() => {
+        const token = localStorage.getItem('token')
+        const userData = localStorage.getItem('user')
+        if (!token || !userData) {
+            window.location.href = '/login'
+            return
         }
-        setActiveMenu(null)
+        try {
+            const parsed = JSON.parse(userData)
+            if (parsed.role !== 'admin' && parsed.role !== 'staff') {
+                window.location.href = '/dashboard'
+                return
+            }
+            setUser(parsed)
+        } catch (e) {
+            window.location.href = '/login'
+        }
+    }, [])
+
+    const fetchProperties = async () => {
+        try {
+            const data = await propertiesAPI.getAll({ limit: 50 })
+            const propertiesList = data.data || (Array.isArray(data) ? data : [])
+            if (Array.isArray(propertiesList)) {
+                setProperties(propertiesList)
+            }
+        } catch (err) {
+            console.error("Failed to sync portfolio:", err)
+        } finally {
+            setLoadingData(false)
+        }
     }
 
-    return (
-        <div className="min-h-screen bg-[#020617] pb-20 text-white font-sans">
-            <div className="max-w-7xl mx-auto px-6 pt-10 space-y-12">
+    useEffect(() => {
+        fetchProperties()
+    }, [])
 
-                {/* --- HEADER --- */}
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
-                    <div className="space-y-3">
-                        <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Inventory Control</p>
-                        <h1 className="text-6xl md:text-7xl font-black italic tracking-tighter uppercase leading-none">
-                            LAND <span className="text-emerald-900 text-8xl">FOLIO</span>
-                        </h1>
-                        <p className="text-slate-500 text-lg font-bold italic">Global Real Estate Asset Management</p>
-                    </div>
+    const handleStatusChange = async (propertyId, newStatus) => {
+        setUpdatingId(propertyId)
+        try {
+            await adminAPI.updatePropertyStatus(propertyId, newStatus)
+            setProperties(prev => prev.map(p => {
+                const targetId = p.id || p._id
+                return targetId === propertyId ? { ...p, status: newStatus } : p
+            }))
+        } catch (err) {
+            console.error("Status update failed:", err)
+        } finally {
+            setUpdatingId(null)
+        }
+    }
 
-                    <Link href="/admin/properties/add">
-                        <button className="group flex items-center gap-3 bg-emerald-600 hover:bg-emerald-500 px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-xl shadow-emerald-950/20">
-                            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-                            ADD NEW ASSET
-                        </button>
-                    </Link>
-                </div>
+    const openEditDrawer = (propertyProfile) => {
+        setEditingProperty(propertyProfile)
+        setIsFormOpen(true)
+    }
 
-                {/* --- SEARCH & FILTERS --- */}
-                <div className="flex flex-col md:flex-row gap-4">
-                    <div className="relative flex-1 group">
-                        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-700 group-focus-within:text-emerald-500 transition-colors">
-                            <Search className="w-5 h-5" />
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="Search properties..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-white/[0.02] border border-white/10 pl-16 py-5 rounded-[2rem] text-sm font-bold text-white placeholder-slate-700 focus:outline-none focus:border-emerald-500/50 transition-all"
-                        />
-                    </div>
+    const openCreateDrawer = () => {
+        setEditingProperty(null)
+        setIsFormOpen(true)
+    }
 
-                    <div className="flex gap-2">
-                        {['All', 'Available', 'Reserved', 'Sold Out'].map((status) => (
-                            <button
-                                key={status}
-                                onClick={() => setFilterStatus(status)}
-                                className={`px-8 py-5 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all border ${filterStatus === status
-                                    ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg'
-                                    : 'bg-white/[0.02] border-white/5 text-slate-600 hover:text-white'}`}
-                            >
-                                {status}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+    const triggerDeleteVerification = (propertyId, propertyTitle) => {
+        setDeleteModal({ isOpen: true, propertyId, propertyTitle })
+    }
 
-                {/* --- DESKTOP TABLE (Breakout Menu Capable) --- */}
-                <div className="hidden md:block bg-white/[0.01] border border-white/5 rounded-[3.5rem] shadow-2xl overflow-visible">
-                    <table className="w-full border-collapse">
-                        <thead>
-                        <tr className="border-b border-white/5">
-                            <th className="px-10 py-10 text-left text-[10px] font-black uppercase tracking-[0.3em] text-slate-700">Property Preview</th>
-                            <th className="px-8 py-10 text-left text-[10px] font-black uppercase tracking-[0.3em] text-slate-700">Valuation</th>
-                            <th className="px-8 py-10 text-left text-[10px] font-black uppercase tracking-[0.3em] text-slate-700">Status</th>
-                            <th className="px-8 py-10 text-right text-[10px] font-black uppercase tracking-[0.3em] text-slate-700">Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                        {filteredProperties.map((prop) => (
-                            <tr key={prop.id} className="group hover:bg-white/[0.02] transition-all duration-300">
-                                <td className="px-10 py-8">
-                                    <div className="flex items-center gap-6">
-                                        <div className="w-24 h-24 rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl">
-                                            <img
-                                                src={prop.image}
-                                                alt={prop.title}
-                                                className="w-full h-full object-cover group-hover:scale-110 duration-700 transition-transform"
-                                            />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-black text-xl italic uppercase tracking-tighter text-white">{prop.title}</h3>
-                                            <div className="flex items-center gap-2 mt-2 text-slate-500">
-                                                <MapPin className="w-4 h-4 text-emerald-500" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest">{prop.city}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
+    const executePurgeProtocol = async () => {
+        const { propertyId } = deleteModal
+        try {
+            await adminAPI.deleteProperty(propertyId)
+            setProperties(prev => prev.filter(p => (p.id || p._id) !== propertyId))
+        } catch (err) {
+            console.error("Delete failed:", err)
+        } finally {
+            setDeleteModal({ isOpen: false, propertyId: null, propertyTitle: '' })
+        }
+    }
 
-                                <td className="px-8 py-8 font-black italic text-2xl text-white">
-                                    {prop.price}
-                                </td>
-
-                                <td className="px-8 py-8">
-                                    <StatusChip status={prop.status} />
-                                </td>
-
-                                <td className="px-8 py-8 text-right">
-                                    <ActionMenu
-                                        prop={prop}
-                                        activeMenu={activeMenu}
-                                        setActiveMenu={setActiveMenu}
-                                        updateStatus={updateStatus}
-                                        deleteProperty={deleteProperty}
-                                        totalCount={filteredProperties.length}
-                                        index={filteredProperties.indexOf(prop)}
-                                    />
-                                </td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* --- MOBILE CARDS --- */}
-                <div className="md:hidden space-y-6">
-                    {filteredProperties.map((prop) => (
-                        <div key={prop.id} className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] overflow-hidden">
-                            <div className="relative h-64">
-                                <img src={prop.image} alt={prop.title} className="w-full h-full object-cover" />
-                                <div className="absolute top-6 right-6">
-                                    <StatusChip status={prop.status} />
-                                </div>
-                            </div>
-                            <div className="p-8">
-                                <div className="flex justify-between items-start mb-6">
-                                    <div>
-                                        <h3 className="text-xl font-black italic uppercase text-white">{prop.title}</h3>
-                                        <div className="flex items-center gap-2 mt-2 text-slate-500">
-                                            <MapPin className="w-4 h-4 text-emerald-500" />
-                                            <span className="text-[10px] font-black tracking-widest">{prop.city}</span>
-                                        </div>
-                                    </div>
-                                    <p className="text-2xl font-black italic text-emerald-500">{prop.price}</p>
-                                </div>
-                                <ActionMenu
-                                    prop={prop}
-                                    activeMenu={activeMenu}
-                                    setActiveMenu={setActiveMenu}
-                                    updateStatus={updateStatus}
-                                    deleteProperty={deleteProperty}
-                                    isMobile={true}
-                                />
-                            </div>
-                        </div>
-                    ))}
-                </div>
+    if (loadingData) {
+        return (
+            <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center text-white">
+                <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+                <p className="text-slate-500 text-xs font-black uppercase tracking-widest">Compiling Full Portfolio Sync...</p>
             </div>
-        </div>
-    )
-}
-
-/* --- COMPONENTS --- */
-
-function StatusChip({ status }) {
-    const styles = {
-        Available: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-        Reserved: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-        'Sold Out': 'bg-red-500/10 text-red-500 border-red-500/20',
-        Hidden: 'bg-slate-500/10 text-slate-500 border-white/5'
+        )
     }
-    return (
-        <span className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${styles[status]}`}>
-            {status}
-        </span>
-    )
-}
-
-function ActionMenu({ prop, activeMenu, setActiveMenu, updateStatus, deleteProperty, index, totalCount, isMobile }) {
-    // Logic to ensure menu doesn't overflow bottom of container
-    const isNearBottom = index >= totalCount - 2;
 
     return (
-        <div className="relative inline-block">
-            <button
-                onClick={(e) => {
-                    e.stopPropagation()
-                    setActiveMenu(activeMenu === prop.id ? null : prop.id)
-                }}
-                className={`p-4 rounded-2xl transition-all ${activeMenu === prop.id ? 'bg-emerald-600 text-white shadow-xl' : 'bg-white/5 text-slate-500 hover:text-white'}`}
-            >
-                <MoreVertical className="w-5 h-5" />
-            </button>
+        <div className="min-h-screen bg-[#020617] text-white p-4 md:p-8 pt-6 selection:bg-emerald-500/30 relative">
+            <div className="max-w-7xl mx-auto">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <ShieldAlert className="w-4 h-4 text-emerald-500" />
+                            <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Master Portfolio Authority</p>
+                        </div>
+                        <h1 className="text-5xl font-black tracking-tighter">Global <span className="text-slate-700">Assets</span></h1>
+                    </div>
+                    <button
+                        onClick={openCreateDrawer}
+                        className="bg-emerald-600 text-white w-full md:w-auto px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 hover:bg-emerald-500 transition-all shadow-xl shadow-emerald-600/20 active:scale-95"
+                    >
+                        <Plus className="w-4 h-4" /> Register New Land
+                    </button>
+                </div>
 
-            {activeMenu === prop.id && (
-                <>
-                    <div className="fixed inset-0 z-40" onClick={() => setActiveMenu(null)} />
-                    <div className={`absolute right-0 z-50 w-72 bg-[#0B1220] border border-white/10 rounded-[2.5rem] shadow-2xl py-6 backdrop-blur-3xl animate-in fade-in zoom-in duration-200 ${isNearBottom ? 'bottom-full mb-4' : 'top-full mt-4'}`}>
-                        <div className="px-8 text-[8px] font-black uppercase tracking-[0.4em] text-slate-700 mb-4">Management</div>
-
-                        <Link href={`/admin/properties/edit/${prop.id}`} className="flex items-center gap-4 px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 transition-all">
-                            <Edit3 className="w-4 h-4 text-emerald-500" /> Modify Asset
-                        </Link>
-
-                        <div className="h-px bg-white/5 mx-6 my-4" />
-
-                        <div className="px-8 text-[8px] font-black uppercase tracking-[0.4em] text-slate-700 mb-4">Set Status</div>
-                        <StatusOption icon={<CheckCircle2 className="w-4 h-4 text-emerald-500" />} label="Available" onClick={() => updateStatus(prop.id, 'Available')} />
-                        <StatusOption icon={<Bookmark className="w-4 h-4 text-orange-500" />} label="Reserved" onClick={() => updateStatus(prop.id, 'Reserved')} />
-                        <StatusOption icon={<Ban className="w-4 h-4 text-red-500" />} label="Sold Out" onClick={() => updateStatus(prop.id, 'Sold Out')} />
-                        <StatusOption icon={<EyeOff className="w-4 h-4 text-slate-600" />} label="Hidden" onClick={() => updateStatus(prop.id, 'Hidden')} />
-
-                        <div className="h-px bg-white/5 mx-6 my-4" />
-                        <button onClick={() => deleteProperty(prop.id)} className="w-full flex items-center gap-4 px-8 py-4 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500/10 transition-all">
-                            <Trash2 className="w-4 h-4" /> Delete Asset
+                {properties.length === 0 ? (
+                    <div className="text-center py-20">
+                        <Database className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                        <p className="text-slate-400 text-sm">No properties registered yet</p>
+                        <button onClick={openCreateDrawer} className="text-emerald-500 text-xs font-bold uppercase tracking-widest mt-2 hover:underline">
+                            + Add your first property
                         </button>
                     </div>
-                </>
-            )}
-        </div>
-    )
-}
+                ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                        {properties.map((prop) => {
+                            const operationalId = prop.id || prop._id
+                            const isHidden = prop.status === 'hidden'
 
-function StatusOption({ icon, label, onClick }) {
-    return (
-        <button onClick={onClick} className="w-full flex items-center gap-4 px-8 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 transition-all">
-            {icon} {label}
-        </button>
+                            return (
+                                <div
+                                    key={operationalId}
+                                    className={`bg-white/5 border p-6 rounded-[2rem] flex flex-col md:flex-row md:items-center gap-6 group hover:bg-white/[0.07] transition-all ${
+                                        isHidden ? 'border-dashed border-white/10 bg-white/[0.01] opacity-60' : 'border-white/5'
+                                    }`}
+                                >
+                                    <div className="w-full md:w-32 h-36 md:h-24 rounded-2xl overflow-hidden bg-slate-900 relative border border-white/5 flex-shrink-0">
+                                        <img src={prop.imageUrl || prop.image || "https://images.unsplash.com/photo-1500382017468-9049fed747ef"} className="w-full h-full object-cover" alt="" />
+                                        {isHidden && (
+                                            <div className="absolute inset-0 bg-black/70 flex items-center justify-center text-slate-400">
+                                                <EyeOff className="w-5 h-5" />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex-grow">
+                                        <div className="flex items-center gap-3">
+                                            <h3 className="text-xl font-bold tracking-tight">{prop.title}</h3>
+                                            {isHidden && <span className="px-2 py-0.5 bg-white/10 rounded text-[8px] font-black tracking-widest text-slate-400 uppercase">Hidden From Public</span>}
+                                        </div>
+                                        <div className="flex wrap items-center gap-x-4 gap-y-2 mt-2">
+                                            <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold uppercase tracking-wider"><MapPin className="w-3 h-3 text-slate-500" /> {typeof prop.location === 'string' ? prop.location : prop.location?.name || 'Lagos'}</div>
+                                            <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold uppercase tracking-wider"><Database className="w-3 h-3 text-slate-500" /> {prop.size || '500 sqm'}</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="md:px-4">
+                                        <p className="text-[9px] font-black text-slate-500 uppercase mb-1">Asset Value</p>
+                                        <p className="text-xl font-black text-white">₦{prop.price ? Number(prop.price).toLocaleString() : '0'}</p>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1 min-w-[150px]">
+                                        <label className="text-[9px] font-black text-slate-500 uppercase tracking-wider px-1">Operational State</label>
+                                        <div className="relative flex items-center">
+                                            <select
+                                                disabled={updatingId === operationalId}
+                                                value={prop.status || 'available'}
+                                                onChange={(e) => handleStatusChange(operationalId, e.target.value)}
+                                                className={`w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer select-none transition-colors ${
+                                                    prop.status === 'available' ? 'text-emerald-400 border-emerald-500/20' :
+                                                        prop.status === 'reserved' ? 'text-amber-400 border-amber-500/20' :
+                                                            prop.status === 'sold' ? 'text-blue-400 border-blue-500/20' : 'text-slate-400 border-white/5'
+                                                }`}
+                                            >
+                                                <option value="available">Available</option>
+                                                <option value="reserved">Reserved</option>
+                                                <option value="sold">Sold Out</option>
+                                                <option value="hidden">Hidden</option>
+                                            </select>
+                                            {updatingId === operationalId && <Loader2 className="absolute right-3 w-3 h-3 text-emerald-500 animate-spin" />}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 md:self-center self-end pt-4 md:pt-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => openEditDrawer(prop)}
+                                            className="p-4 rounded-xl bg-blue-500/10 hover:bg-blue-600 text-blue-400 hover:text-white transition-all border border-blue-500/10"
+                                        >
+                                            <Edit3 className="w-4 h-4" />
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => triggerDeleteVerification(operationalId, prop.title)}
+                                            className="p-4 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all border border-red-500/10"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
+            </div>
+
+            <AddPropertyForm
+                isOpen={isFormOpen}
+                onClose={() => {
+                    setIsFormOpen(false)
+                    setEditingProperty(null)
+                }}
+                onRefresh={fetchProperties}
+                initialData={editingProperty}
+            />
+
+            <AnimatePresence>
+                {deleteModal.isOpen && (
+                    <>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setDeleteModal({ isOpen: false, propertyId: null, propertyTitle: '' })} className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200]" />
+                        <div className="fixed inset-0 flex items-center justify-center p-4 z-[201] pointer-events-none">
+                            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="bg-[#0b1329] border border-red-500/20 max-w-md w-full rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl pointer-events-auto">
+                                <div className="w-14 h-14 bg-red-500/10 text-red-500 border border-red-500/20 rounded-full flex items-center justify-center mx-auto"><AlertTriangle className="w-6 h-6" /></div>
+                                <div className="space-y-2">
+                                    <h3 className="text-xl font-black tracking-tight text-white">Confirm Asset Purge</h3>
+                                    <p className="text-xs text-slate-400 leading-relaxed px-4">
+                                        Are you sure you want to delete &quot;{deleteModal.propertyTitle}&quot;? This will wipe the land from both your dashboard registry and the live client marketplace.
+                                    </p>
+                                </div>
+                                <div className="flex gap-3 pt-2">
+                                    <button type="button" onClick={() => setDeleteModal({ isOpen: false, propertyId: null, propertyTitle: '' })} className="flex-1 bg-white/5 hover:bg-white/10 text-slate-300 font-bold uppercase tracking-widest text-[10px] py-4 rounded-xl border border-white/5 transition-all">Cancel</button>
+                                    <button type="button" onClick={executePurgeProtocol} className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-xl transition-all">Confirm Delete</button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    </>
+                )}
+            </AnimatePresence>
+        </div>
     )
 }

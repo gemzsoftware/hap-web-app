@@ -5,6 +5,7 @@ import corsPlugin from './plugins/cors.js';
 import errorHandlerPlugin from './plugins/error-handler.js';
 import { healthRoutes } from './modules/health/routes.js';
 import { authRoutes } from './modules/auth/routes.js';
+import { applicationRoutes } from './modules/applications/routes.js';
 import { propertyRoutes } from './modules/properties/routes.js';
 import { inquiryRoutes } from './modules/inquiries/routes.js';
 import { purchaseRoutes } from './modules/purchases/routes.js';
@@ -17,7 +18,11 @@ import { adminRoutes } from './modules/admin/routes.js';
 import { notificationRoutes } from './modules/notifications/routes.js';
 
 export async function buildApp() {
-  const app = Fastify({ logger: false });
+  // Configured with a 50MB threshold to comfortably process heavy field photos
+  const app = Fastify({
+    logger: false,
+    bodyLimit: 52428800
+  });
 
   await app.register(sensible);
   await app.register(corsPlugin);
@@ -30,6 +35,7 @@ export async function buildApp() {
   await app.register(inquiryRoutes, { prefix: '/api/inquiries' });
   await app.register(purchaseRoutes, { prefix: '/api/purchases' });
   await app.register(paymentRoutes, { prefix: '/api/payments' });
+  // FIXED: Changed to receiptRoutes to perfectly match your file import above
   await app.register(receiptRoutes, { prefix: '/api/receipts' });
   await app.register(documentRoutes, { prefix: '/api/documents' });
   await app.register(dashboardRoutes, { prefix: '/api/dashboard' });

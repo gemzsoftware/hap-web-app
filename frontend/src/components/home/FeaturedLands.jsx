@@ -1,17 +1,42 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { mockLands } from '@/data/mockLands'
+import { propertiesAPI } from '@/lib/api/client'
 import LandCard from '@/components/lands/LandCard'
 
 export default function FeaturedLands() {
-    // Taking the first 3 for the high-end "Curated" feel
-    const featuredLands = mockLands.slice(0, 3)
+    const [featuredLands, setFeaturedLands] = useState([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        loadFeaturedLands()
+    }, [])
+
+    const loadFeaturedLands = async () => {
+        try {
+            // First try featured
+            const data = await propertiesAPI.getFeatured(3)
+
+            if (data.data && data.data.length >= 3) {
+                setFeaturedLands(data.data)
+            } else {
+                // If not enough featured, get all available
+                const allData = await propertiesAPI.getAll({ limit: 3, status: 'available' })
+                setFeaturedLands(allData.data || [])
+            }
+        } catch (error) {
+            console.error('Failed to load featured lands:', error)
+            const { mockLands } = await import('@/data/mockLands')
+            setFeaturedLands(mockLands.slice(0, 3))
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
         <section className="py-24 bg-white relative overflow-hidden">
-            {/* Subtle background decoration to break the white space */}
             <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-emerald-50/30 blur-[120px] rounded-full pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-1/4 h-1/4 bg-slate-50 blur-[100px] rounded-full pointer-events-none" />
 
@@ -36,7 +61,6 @@ export default function FeaturedLands() {
                         </p>
                     </div>
 
-                    {/* Top Right "View All" - Sophisticated Placement */}
                     <div className="hidden md:block">
                         <Link
                             href="/properties"
@@ -51,21 +75,33 @@ export default function FeaturedLands() {
                 </div>
 
                 {/* The Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {featuredLands.map((land, index) => (
-                        <motion.div
-                            key={land.id}
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: index * 0.15, duration: 0.6 }}
-                        >
-                            <LandCard land={land} />
-                        </motion.div>
-                    ))}
-                </div>
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="bg-slate-100 rounded-[3rem] h-96 animate-pulse" />
+                        ))}
+                    </div>
+                ) : featuredLands.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                        {featuredLands.map((land, index) => (
+                            <motion.div
+                                key={land.id}
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: index * 0.15, duration: 0.6 }}
+                            >
+                                <LandCard land={land} />
+                            </motion.div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-16">
+                        <p className="text-4xl mb-4">🏡</p>
+                        <p className="text-slate-500">No featured properties available yet</p>
+                    </div>
+                )}
 
-                {/* Mobile-only "View All" button */}
                 <div className="mt-16 text-center md:hidden">
                     <Link
                         href="/properties"
@@ -75,7 +111,6 @@ export default function FeaturedLands() {
                     </Link>
                 </div>
 
-                {/* Decorative Bottom Line */}
                 <div className="mt-24 h-[1px] w-full bg-gradient-to-r from-transparent via-slate-100 to-transparent" />
             </div>
         </section>

@@ -26,6 +26,7 @@ export default function AdminLayout({ children }) {
         { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard className="w-4 h-4" /> },
         { name: 'Properties', path: '/admin/properties', icon: <Map className="w-4 h-4" /> },
         { name: 'Payments', path: '/admin/payments', icon: <CreditCard className="w-4 h-4" /> },
+        { name: 'Purchases', path: '/admin/purchases', icon: <FileStack className="w-4 h-4" /> },
         { name: 'Users', path: '/admin/users', icon: <Users className="w-4 h-4" /> },
         { name: 'Documents', path: '/admin/documents', icon: <FileStack className="w-4 h-4" /> },
         { name: 'Notifications', path: '/admin/notifications', icon: <Bell className="w-4 h-4" /> },
@@ -77,7 +78,14 @@ export default function AdminLayout({ children }) {
                 </nav>
 
                 <div className="p-6 border-t border-white/10 mt-auto">
-                    <button className="w-full flex items-center gap-4 px-6 py-4 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-3xl transition-all text-sm font-semibold">
+                    <button
+                        onClick={() => {
+                            localStorage.removeItem('token')
+                            localStorage.removeItem('user')
+                            window.location.href = '/login'
+                        }}
+                        className="w-full flex items-center gap-4 px-6 py-4 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-3xl transition-all text-sm font-semibold"
+                    >
                         <LogOut className="w-4 h-4" />
                         End Session
                     </button>
@@ -88,7 +96,7 @@ export default function AdminLayout({ children }) {
             <main className="flex-1 flex flex-col lg:ml-72 min-h-screen overflow-hidden">
 
                 {/* --- NAVBAR --- */}
-                <header className="h-24 md:h-28 flex items-center justify-between px-6 md:px-12 border-b border-white/10 bg-[#020617]/95 backdrop-blur-2xl z-40">
+                <header className="h-24 md:h-28 flex items-center justify-between px-6 md:px-12 border-b border-white/10 bg-[#020617]/95 backdrop-blur-2xl z-40 flex-shrink-0">
                     <button
                         onClick={() => setIsMobileOpen(true)}
                         className="lg:hidden p-4 bg-white/5 hover:bg-white/10 rounded-3xl text-white transition-all"
@@ -119,7 +127,7 @@ export default function AdminLayout({ children }) {
                     </div>
                 </header>
 
-                {/* --- MORE SPACIOUS CONTENT AREA --- */}
+                {/* --- CONTENT --- */}
                 <div className="flex-1 overflow-y-auto p-6 md:p-10 lg:p-12 xl:p-16 max-w-[1480px] w-full mx-auto">
                     {children}
                 </div>

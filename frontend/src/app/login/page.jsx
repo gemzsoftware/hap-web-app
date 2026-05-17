@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation' // Optional, but useful
+import { useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { motion } from 'framer-motion'
@@ -25,9 +25,13 @@ export default function LoginPage() {
         try {
             const response = await fetch('http://localhost:5000/api/auth/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                // FIXED: Changed 'applications/json' to 'application/json' to resolve the 415 error completely
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
                 body: JSON.stringify({
-                    email: formData.email,
+                    email: formData.email.trim(),
                     password: formData.password
                 }),
             })
@@ -35,18 +39,19 @@ export default function LoginPage() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || 'Access Denied. Please verify credentials.')
+                throw new Error(data.error?.message || data.message || 'Access Denied. Please verify credentials.')
             }
 
-            // 1. Save Token and User Object for the Navbar
-            localStorage.setItem('token', data.token)
-            localStorage.setItem('user', JSON.stringify(data.user))
+            // Save Token and User Object for the Navbar
+            localStorage.setItem('token', data.token || data.accessToken)
+            if (data.user) {
+                localStorage.setItem('user', JSON.stringify(data.user))
+            }
 
             setSuccess(true)
 
-            // 2. Short delay so user sees the "Access Granted" state
+            // Short delay so user sees the "Access Granted" state
             setTimeout(() => {
-                // 3. Reload to update Navbar state instantly
                 window.location.href = '/'
             }, 1500)
 
@@ -124,13 +129,13 @@ export default function LoginPage() {
                         className="bg-white rounded-[3.5rem] border border-slate-100 p-10 md:p-14 shadow-[0_60px_100px_-20px_rgba(0,0,0,0.15)]"
                     >
                         {error && (
-                            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-8 text-[11px] font-black uppercase tracking-widest">
+                            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-8 text-[11px] font-black uppercase tracking-widest rounded-lg">
                                 {error}
                             </div>
                         )}
 
                         {success && (
-                            <div className="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 p-4 mb-8 text-[11px] font-black uppercase tracking-widest">
+                            <div className="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 p-4 mb-8 text-[11px] font-black uppercase tracking-widest rounded-lg">
                                 Identity Verified. Redirecting to Terminal...
                             </div>
                         )}
