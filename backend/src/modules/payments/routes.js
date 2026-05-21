@@ -4,6 +4,7 @@ import { Purchase } from '../../models/Purchase.js';
 import { serialize } from '../../utils/serialize.js';
 import { assertOwnerOrStaff } from '../../utils/ownership.js';
 import { applyStubPaymentStatus } from './service.js';
+import { ADMIN_ROLES } from '../../utils/roles.js';
 
 const webhookSchema = z.object({
   providerReference: z.string().min(1),
@@ -12,7 +13,7 @@ const webhookSchema = z.object({
 
 export async function paymentRoutes(app) {
   app.get('/', { preHandler: app.authenticate }, async (request) => {
-    const filter = ['admin', 'staff'].includes(request.user.role) ? {} : { userId: request.user.id };
+    const filter = ADMIN_ROLES.includes(request.user.role) ? {} : { userId: request.user.id };
     const payments = await Payment.find(filter).sort({ createdAt: -1 });
     return { payments: serialize(payments) };
   });

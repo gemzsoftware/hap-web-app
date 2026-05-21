@@ -4,10 +4,11 @@ import { Payment } from '../../models/Payment.js';
 import { Purchase } from '../../models/Purchase.js';
 import { serialize } from '../../utils/serialize.js';
 import { assertOwnerOrStaff } from '../../utils/ownership.js';
+import { ADMIN_ROLES } from '../../utils/roles.js';
 
 export async function receiptRoutes(app) {
   app.get('/', { preHandler: app.authenticate }, async (request) => {
-    if (['admin', 'staff'].includes(request.user.role)) {
+    if (ADMIN_ROLES.includes(request.user.role)) {
       const receipts = await Receipt.find().sort({ issuedAt: -1 });
       return { receipts: serialize(receipts) };
     }
@@ -19,7 +20,7 @@ export async function receiptRoutes(app) {
     return { receipts: serialize(receipts) };
   });
 
-  app.post('/', { preHandler: app.requireRole(['admin', 'staff']) }, async (request, reply) => {
+  app.post('/', { preHandler: app.requireRole(ADMIN_ROLES) }, async (request, reply) => {
     const body = z.object({ paymentId: z.string(), pdfUrl: z.string().optional() }).parse(request.body);
     const payment = await Payment.findById(body.paymentId);
     if (!payment) throw app.httpErrors.notFound('Payment not found');

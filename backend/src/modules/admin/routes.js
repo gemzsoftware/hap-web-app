@@ -12,6 +12,7 @@ import { CompanySetting } from '../../models/CompanySetting.js';
 import { AuditLog } from '../../models/AuditLog.js';
 import { serialize } from '../../utils/serialize.js';
 import { toSlug } from '../../utils/slug.js';
+import { ADMIN_ROLES, USER_ROLES, isSuperAdminRole } from '../../utils/roles.js';
 
 const objectIdSchema = z.string().refine((value) => mongoose.Types.ObjectId.isValid(value), 'Invalid ObjectId');
 const paramsSchema = z.object({ id: objectIdSchema });
@@ -86,14 +87,14 @@ async function audit(actorId, action, entityType, entityId, metadata = {}) {
 
 async function adminOrStaff(request) {
   await request.server.authenticate(request);
-  if (!['admin', 'staff'].includes(request.user.role)) {
+  if (!ADMIN_ROLES.includes(request.user.role)) {
     throw request.server.httpErrors.forbidden('Admin or staff access required');
   }
 }
 
 async function adminOnly(request) {
   await request.server.authenticate(request);
-  if (request.user.role !== 'admin') {
+  if (!['admin', 'super_admin'].includes(request.user.role)) {
     throw request.server.httpErrors.forbidden('Admin access required');
   }
 }
@@ -216,7 +217,7 @@ export async function adminRoutes(app) {
   app.get('/users', async (request) => {
     const query = z
       .object({
-        role: z.enum(['investor', 'admin', 'staff']).optional(),
+        role: z.enum(USER_ROLES).optional(),
         status: z.enum(['pending_verification', 'active', 'suspended']).optional(),
         q: z.string().optional()
       })
@@ -254,7 +255,10 @@ export async function adminRoutes(app) {
 
   app.patch('/users/:id/role', { preHandler: adminOnly }, async (request) => {
     const { id } = paramsSchema.parse(request.params);
-    const body = z.object({ role: z.enum(['investor', 'admin', 'staff']) }).parse(request.body);
+    const body = z.object({ role: z.enum(USER_ROLES) }).parse(request.body);
+    if (isSuperAdminRole(body.role) && !isSuperAdminRole(request.user.role)) {
+      throw app.httpErrors.forbidden('Super admin access required');
+    }
     const user = await User.findByIdAndUpdate(id, { role: body.role }, { new: true });
     if (!user) throw app.httpErrors.notFound('User not found');
     await audit(request.user.id, 'user.role_changed', 'User', user._id, { role: body.role });

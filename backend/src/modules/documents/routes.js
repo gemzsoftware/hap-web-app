@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { Document } from '../../models/Document.js';
 import { serialize } from '../../utils/serialize.js';
 import { assertOwnerOrStaff } from '../../utils/ownership.js';
+import { ADMIN_ROLES } from '../../utils/roles.js';
 
 const documentSchema = z.object({
   userId: z.string(),
@@ -15,12 +16,12 @@ const documentSchema = z.object({
 
 export async function documentRoutes(app) {
   app.get('/', { preHandler: app.authenticate }, async (request) => {
-    const filter = ['admin', 'staff'].includes(request.user.role) ? {} : { userId: request.user.id };
+    const filter = ADMIN_ROLES.includes(request.user.role) ? {} : { userId: request.user.id };
     const documents = await Document.find(filter).sort({ createdAt: -1 });
     return { documents: serialize(documents) };
   });
 
-  app.post('/', { preHandler: app.requireRole(['admin', 'staff']) }, async (request, reply) => {
+  app.post('/', { preHandler: app.requireRole(ADMIN_ROLES) }, async (request, reply) => {
     const body = documentSchema.parse(request.body);
     const document = await Document.create(body);
     return reply.code(201).send({ document: serialize(document) });

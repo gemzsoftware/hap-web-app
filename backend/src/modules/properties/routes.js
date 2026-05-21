@@ -4,6 +4,7 @@ import { Property } from '../../models/Property.js';
 import { InstallmentPlan } from '../../models/InstallmentPlan.js';
 import { serialize } from '../../utils/serialize.js';
 import { toSlug } from '../../utils/slug.js';
+import { ADMIN_ROLES } from '../../utils/roles.js';
 
 const propertySchema = z.object({
   title: z.string().min(2),
@@ -141,7 +142,7 @@ export async function propertyRoutes(app) {
     return { property: await withPlan(property) };
   });
 
-  app.post('/', { preHandler: app.requireRole(['admin', 'staff']) }, async (request, reply) => {
+  app.post('/', { preHandler: app.requireRole(ADMIN_ROLES) }, async (request, reply) => {
     const body = propertySchema.parse(request.body);
     const property = await Property.create({ ...body, slug: toSlug(body.title) });
     return reply.code(201).send({ property: serialize(property) });

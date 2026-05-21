@@ -8,6 +8,7 @@ import { Document } from '../../models/Document.js';
 import { serialize } from '../../utils/serialize.js';
 import { assertOwnerOrStaff } from '../../utils/ownership.js';
 import { createPendingPayment } from '../payments/service.js';
+import { ADMIN_ROLES } from '../../utils/roles.js';
 
 const createPurchaseSchema = z.object({
   propertyId: z.string(),
@@ -21,7 +22,7 @@ const initializePaymentSchema = z.object({
 
 export async function purchaseRoutes(app) {
   app.get('/', { preHandler: app.authenticate }, async (request) => {
-    const filter = ['admin', 'staff'].includes(request.user.role) ? {} : { userId: request.user.id };
+    const filter = ADMIN_ROLES.includes(request.user.role) ? {} : { userId: request.user.id };
     const purchases = await Purchase.find(filter).populate('propertyId').sort({ createdAt: -1 });
     return { purchases: serialize(purchases) };
   });
