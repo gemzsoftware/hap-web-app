@@ -2,10 +2,11 @@ import mongoose from 'mongoose';
 import { Purchase } from '../../models/Purchase.js';
 import { Payment } from '../../models/Payment.js';
 import { Document } from '../../models/Document.js';
+import { ADMIN_ROLES } from '../../utils/roles.js';
 
 export async function dashboardRoutes(app) {
   app.get('/summary', { preHandler: app.authenticate }, async (request) => {
-    const isStaff = ['admin', 'staff'].includes(request.user.role);
+    const isStaff = ADMIN_ROLES.includes(request.user.role);
     const userFilter = isStaff ? {} : { userId: new mongoose.Types.ObjectId(request.user.id) };
     const paymentFilter = isStaff
       ? { status: 'successful' }

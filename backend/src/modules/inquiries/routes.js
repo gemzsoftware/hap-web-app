@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { Inquiry } from '../../models/Inquiry.js';
 import { serialize } from '../../utils/serialize.js';
+import { ADMIN_ROLES } from '../../utils/roles.js';
 
 const createInquirySchema = z.object({
   name: z.string().min(2),
@@ -24,7 +25,7 @@ export async function inquiryRoutes(app) {
     });
   });
 
-  app.get('/', { preHandler: app.requireRole(['admin', 'staff']) }, async () => {
+  app.get('/', { preHandler: app.requireRole(ADMIN_ROLES) }, async () => {
     const inquiries = await Inquiry.find().sort({ createdAt: -1 });
     return { inquiries: serialize(inquiries) };
   });

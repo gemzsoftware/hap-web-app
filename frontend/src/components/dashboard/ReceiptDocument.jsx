@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { ShieldCheck, Printer, FileText, Landmark } from 'lucide-react'
+import { FileText, Printer } from 'lucide-react'
 
 export default function ReceiptDocument({ receiptData, landData }) {
     const printAreaRef = useRef()
@@ -11,30 +11,25 @@ export default function ReceiptDocument({ receiptData, landData }) {
         const printWindow = window.open('', '', 'height=1000,width=850')
         printWindow.document.write('<html><head><title>Heaven Ark Properties - Invoice/Receipt</title>')
 
-        // CSS rules specifically designed to match the uploaded physical copy layout 1:1 on print
         printWindow.document.write(`
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
                 body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 20px; background: #fff; color: #1e293b; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                 .invoice-container { border: 1px solid #e2e8f0; border-radius: 16px; padding: 40px; position: relative; background: #fff; overflow: hidden; min-height: 950px; display: flex; flex-col; justify-content: space-between; }
                 
-                /* Top Luxury Wave Styling imitating image layout */
                 .top-bar-wave { display: flex; justify-content: space-between; items-start; border-bottom: 2px dashed #e2e8f0; padding-bottom: 30px; margin-bottom: 25px; }
                 .logo-section img { height: 75px; object-fit: contain; }
                 .logo-section h2 { font-size: 22px; font-weight: 800; color: #0f172a; margin: 8px 0 2px 0; letter-spacing: -0.5px; }
                 .contact-line { font-size: 11px; color: #64748b; font-weight: 600; margin: 2px 0; }
                 
-                /* Stacked Right Side Fields matching boxes */
                 .meta-boxes { display: flex; flex-direction: column; gap: 8px; width: 260px; }
                 .meta-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; font-weight: 700; color: #1e3d6b; }
                 .meta-box-input { border: 1px solid #cca43b; border-radius: 6px; padding: 6px 12px; font-size: 11px; font-family: monospace; color: #334155; min-width: 160px; background: #fff; text-align: right; font-weight: bold; }
                 
-                /* Big Accent Blue Bar Header Strip */
                 .invoice-title-strip { background: #1e3d6b; color: #fff; padding: 12px 25px; font-size: 14px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; border-left: 5px solid #cca43b; border-radius: 4px; margin-bottom: 20px; }
                 .client-info-block { font-size: 12px; color: #1e3d6b; font-weight: 800; margin-bottom: 30px; border-bottom: 1px solid #cbd5e1; padding-bottom: 15px; }
                 .client-info-block span { color: #334155; font-weight: 700; margin-left: 10px; text-transform: uppercase; }
                 
-                /* Grid Grid Grid Table Structure */
                 .grid-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; border: 1px solid #1e3d6b; border-radius: 6px; overflow: hidden; }
                 .grid-table th { background: #1e3d6b; color: #fff; font-size: 11px; font-weight: 800; padding: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
                 .grid-table td { padding: 14px 12px; font-size: 12px; color: #334155; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; font-weight: bold; }
@@ -42,7 +37,6 @@ export default function ReceiptDocument({ receiptData, landData }) {
                 .text-center { text-align: center; }
                 .text-right { text-align: right; }
                 
-                /* Bottom Footer Alignment - Payment Details vs Totals split */
                 .footer-grid { display: flex; justify-content: space-between; gap: 30px; margin-top: auto; padding-top: 20px; }
                 .bank-details-box { width: 50%; font-size: 11px; color: #334155; font-weight: 600; }
                 .bank-title { font-size: 12px; font-weight: 800; color: #1e3d6b; text-transform: uppercase; margin-bottom: 10px; border-bottom: 2px solid #cca43b; padding-bottom: 4px; display: inline-block; }
@@ -67,16 +61,14 @@ export default function ReceiptDocument({ receiptData, landData }) {
         printWindow.print()
     }
 
-    // Default calculations to match invoice blocks automatically
     const baseValue = Number(receiptData?.amount || landData?.price || 0)
     const subTotal = baseValue
-    const taxAmount = 0 // Stays clean as placeholder unless assigned
+    const taxAmount = 0
     const totalValue = subTotal + taxAmount
 
     return (
         <div className="bg-slate-900 border border-white/10 rounded-[2.5rem] p-6 md:p-10 max-w-4xl mx-auto text-white shadow-2xl space-y-6 selection:bg-emerald-500/20">
 
-            {/* Header Form Controllers */}
             <div className="flex justify-between items-center border-b border-white/5 pb-4">
                 <div className="flex items-center gap-2 text-xs font-black uppercase text-slate-400 tracking-wider">
                     <FileText className="w-4 h-4 text-amber-400" /> Print Alignment Module
@@ -89,14 +81,12 @@ export default function ReceiptDocument({ receiptData, landData }) {
                 </button>
             </div>
 
-            {/* LIVE DATA INJECTION ENGINE MATED TO PRINT WINDOW WRAPPERS */}
-            <div ref={printAreaRef} className="hidden-from-screen-but-readable-by-ref">
+            <div ref={printAreaRef}>
 
                 {/* Section 1: Logo & Header Metadata Boxes */}
                 <div className="top-bar-wave">
                     <div className="logo-section">
-                        {/* Pulls logo explicitly from public root directory references */}
-                        <img src="/logo.png" alt="" onError={(e)=>{e.target.src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=150"}} />
+                        <img src="/logo.png" alt="Heaven Ark Logo" onError={(e)=>{e.target.style.display='none'}} />
                         <h2>HEAVEN ARK PROPERTIES</h2>
                         <div className="contact-line">📞 +234 (0) 805 867 8439</div>
                         <div className="contact-line">✉️ heavenarkproperties@gmail.com</div>
@@ -105,11 +95,11 @@ export default function ReceiptDocument({ receiptData, landData }) {
                     <div className="meta-boxes">
                         <div className="meta-row">
                             <span>Date:</span>
-                            <div className="meta-box-input">{new Date(receiptData?.issuedAt || receiptData?.createdAt || Date.now()).toLocaleDateString('en-NG')}</div>
+                            <div className="meta-box-input">{new Date(receiptData?.issuedAt || receiptData?.createdAt || receiptData?.verifiedAt || Date.now()).toLocaleDateString('en-NG')}</div>
                         </div>
                         <div className="meta-row">
                             <span>Inv No.:</span>
-                            <div className="meta-box-input">{receiptData?.serialNumber || `INV-${Date.now().toString().slice(-6)}`}</div>
+                            <div className="meta-box-input">{receiptData?.receiptNumber || receiptData?.serialNumber || `INV-${Date.now().toString().slice(-6)}`}</div>
                         </div>
                         <div className="meta-row">
                             <span>P.O. No.:</span>
@@ -125,7 +115,7 @@ export default function ReceiptDocument({ receiptData, landData }) {
 
                 {/* Section 3: Client Identity Target Line */}
                 <div className="client-info-block">
-                    CLIENT INFORMATION: <span>{receiptData?.senderName || 'Verified Investor Account Pool'}</span>
+                    CLIENT INFORMATION: <span>{receiptData?.buyerName || receiptData?.senderName || 'Verified Investor Account Pool'}</span>
                 </div>
 
                 {/* Section 4: Line Item Data Grid Table Matrix */}
@@ -142,34 +132,26 @@ export default function ReceiptDocument({ receiptData, landData }) {
                     <tbody>
                     <tr>
                         <td className="text-center">1</td>
-                        <td>Land Allocation: Real Estate Infrastructure Plot — <strong>{landData?.title || 'Heaven Ark Parcel'}</strong> ({landData?.size || '500 sqm'})</td>
+                        <td>Land Allocation: Real Estate Infrastructure Plot — <strong>{landData?.title || receiptData?.propertyTitle || 'Heaven Ark Parcel'}</strong> ({landData?.size || '500 sqm'})</td>
                         <td className="text-center">1</td>
                         <td className="text-right">₦{baseValue.toLocaleString()}</td>
                         <td className="text-right">₦{baseValue.toLocaleString()}</td>
                     </tr>
-                    {/* Empty padding rows to preserve the aesthetics of the template */}
                     <tr>
                         <td className="text-center" style={{color: 'transparent'}}>2</td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
+                        <td></td><td></td><td></td><td></td>
                     </tr>
                     <tr>
                         <td className="text-center" style={{color: 'transparent'}}>3</td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
+                        <td></td><td></td><td></td><td></td>
                     </tr>
                     </tbody>
                 </table>
 
-                {/* Section 5: Base Grid Split (Payment Coordinates vs Calculations) */}
+                {/* Section 5: Payment Details vs Totals */}
                 <div className="footer-grid">
                     <div className="bank-details-box">
                         <div className="bank-title">Payment Details:</div>
-
                         <div className="bank-row">
                             <span className="bank-label">Acc Name:</span>
                             <span className="bank-value">Heaven Ark Properties</span>
@@ -204,14 +186,13 @@ export default function ReceiptDocument({ receiptData, landData }) {
                     </div>
                 </div>
 
-                {/* Section 6: Base Slogan Center Ribbon Bar */}
+                {/* Section 6: Footer */}
                 <div className="thank-you-bar">
                     Thank you so much for your business
                 </div>
 
             </div>
 
-            {/* Live Interactive UI Preview Window */}
             <div className="bg-slate-950 p-6 rounded-3xl border border-white/5 text-center space-y-4">
                 <p className="text-sm text-slate-400">
                     The document rendering matrix is synced with your <span className="text-amber-400 font-bold">Access Bank template layout</span>.
@@ -219,7 +200,7 @@ export default function ReceiptDocument({ receiptData, landData }) {
                 </p>
                 <div className="inline-flex items-center gap-2 text-xs font-mono font-bold text-slate-400 bg-white/5 px-4 py-2 rounded-xl">
                     <span>Target Invoice:</span>
-                    <span className="text-emerald-400 font-bold">{receiptData?.serialNumber || 'ARK-PENDING'}</span>
+                    <span className="text-emerald-400 font-bold">{receiptData?.receiptNumber || receiptData?.serialNumber || 'ARK-PENDING'}</span>
                 </div>
             </div>
 

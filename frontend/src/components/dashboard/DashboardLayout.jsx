@@ -33,6 +33,7 @@ const NAV_ITEMS = [
     { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
     { name: 'Support', href: '/dashboard/support', icon: LifeBuoy },
     { name: 'Profile', href: '/dashboard/settings', icon: User },
+
 ]
 
 export default function DashboardLayout({ children }) {

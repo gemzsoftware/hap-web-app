@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb'
+import { ADMIN_ROLES } from '../../utils/roles.js'
 
 export async function applicationRoutes(fastify, options) {
 
@@ -27,7 +28,7 @@ export async function applicationRoutes(fastify, options) {
 
     // 2. ADMIN ROUTE: Pulls the full matching dashboard array stack
     fastify.get('/admin/all', async (request, reply) => {
-        if (request.user?.role !== 'admin') return reply.code(403).send({ error: 'Unauthorized Access Prohibited' })
+        if (!ADMIN_ROLES.includes(request.user?.role)) return reply.code(403).send({ error: 'Unauthorized Access Prohibited' })
 
         const db = fastify.mongo.db
         try {

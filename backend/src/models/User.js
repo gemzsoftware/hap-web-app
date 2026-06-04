@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, trim: true },
     passwordHash: { type: String, required: true },
     passwordSalt: { type: String, required: true },
-    role: { type: String, enum: ['investor', 'admin', 'staff'], default: 'investor' },
+    role: { type: String, enum: ['investor', 'admin', 'super_admin', 'staff'], default: 'investor' },
     status: { type: String, enum: ['pending_verification', 'active', 'suspended'], default: 'pending_verification' },
     emailVerifiedAt: { type: Date },
     phoneVerifiedAt: { type: Date }

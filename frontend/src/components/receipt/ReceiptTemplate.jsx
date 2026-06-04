@@ -38,28 +38,23 @@ export default function ReceiptTemplate({ payment, purchase }) {
                 className="w-[210mm] min-h-[297mm] bg-white text-[#1a2a3a] font-sans relative overflow-hidden mx-auto"
                 style={{ fontFamily: "'Inter', 'Helvetica', sans-serif" }}
             >
-                {/* ========== DECORATIVE CORNER (TOP RIGHT) ========== */}
-                <div className="absolute top-0 right-0 w-[30%] h-[28%] overflow-hidden">
-                    <svg viewBox="0 0 200 200" className="w-full h-full">
-                        <defs>
-                            <pattern id="navyPattern" patternUnits="userSpaceOnUse" width="8" height="8">
-                                <rect width="8" height="8" fill="#1e3a5f" />
-                                <circle cx="4" cy="4" r="1.5" fill="#2a5080" />
-                            </pattern>
-                        </defs>
-                        <path d="M0,200 Q80,160 120,80 Q160,0 200,0 L200,200 Z" fill="url(#navyPattern)" />
-                        <path d="M0,200 Q80,160 120,80 Q160,0 200,0" fill="none" stroke="#C8A951" strokeWidth="4" />
-                    </svg>
-                </div>
-
                 {/* ========== HEADER SECTION ========== */}
                 <div className="pt-12 px-12 pb-0">
                     <div className="flex justify-between items-start">
                         {/* Left: Logo + Company Info */}
                         <div className="text-center w-[38%]">
-                            {/* Logo */}
-                            <div className="w-20 h-20 mx-auto mb-3 bg-gradient-to-br from-[#1e3a5f] to-[#2a5080] rounded-2xl flex items-center justify-center border-2 border-[#C8A951] shadow-lg">
-                                <span className="text-[#C8A951] font-bold text-3xl" style={{ fontFamily: "'Playfair Display', serif" }}>H</span>
+                            {/* Logo - Imported from /logo.png */}
+                            <div className="w-20 h-20 mx-auto mb-3 rounded-2xl flex items-center justify-center overflow-hidden">
+                                <img
+                                    src="/logo.png"
+                                    alt="Heaven Ark Logo"
+                                    className="w-full h-full object-contain"
+                                    onError={(e) => {
+                                        e.target.style.display = 'none'
+                                        e.target.parentElement.innerHTML = '<span class="text-[#C8A951] font-bold text-3xl" style="font-family:\'Playfair Display\',serif">HA</span>'
+                                        e.target.parentElement.className = 'w-20 h-20 mx-auto mb-3 bg-gradient-to-br from-[#1e3a5f] to-[#2a5080] rounded-2xl flex items-center justify-center border-2 border-[#C8A951] shadow-lg'
+                                    }}
+                                />
                             </div>
                             <h1 className="text-xl font-bold tracking-wider text-[#1e3a5f]" style={{ fontFamily: "'Playfair Display', serif" }}>
                                 HEAVEN ARK
@@ -123,7 +118,7 @@ export default function ReceiptTemplate({ payment, purchase }) {
                 </div>
 
                 {/* ========== MAIN TABLE ========== */}
-                <div className="px-12 mt-8">
+                <div className="px-12 mt-8 relative">
                     <table className="w-full border-collapse">
                         <thead>
                         <tr className="bg-[#1e3a5f] text-white">
@@ -146,7 +141,6 @@ export default function ReceiptTemplate({ payment, purchase }) {
                             <td className="py-4 px-3 text-center text-[11px] font-medium text-[#1e3a5f]">₦{amount.toLocaleString()}</td>
                             <td className="py-4 px-3 text-center text-[11px] font-bold text-[#1e3a5f]">₦{amount.toLocaleString()}</td>
                         </tr>
-                        {/* Empty rows for spacing */}
                         {[...Array(5)].map((_, i) => (
                             <tr key={`empty-${i}`} className="border-b border-[#1e3a5f]/5 h-10">
                                 <td colSpan={5}></td>
@@ -155,11 +149,16 @@ export default function ReceiptTemplate({ payment, purchase }) {
                         </tbody>
                     </table>
 
-                    {/* Watermark */}
-                    <div className="absolute top-[55%] left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
-                        <div className="w-64 h-64 rounded-full bg-[#1e3a5f] flex items-center justify-center">
-                            <span className="text-white text-8xl font-bold" style={{ fontFamily: "'Playfair Display', serif" }}>HA</span>
-                        </div>
+                    {/* Watermark - Logo centered in table */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.04] pointer-events-none">
+                        <img
+                            src="/logo.png"
+                            alt=""
+                            className="w-56 h-56 object-contain"
+                            onError={(e) => {
+                                e.target.style.display = 'none'
+                            }}
+                        />
                     </div>
                 </div>
 
