@@ -21,6 +21,10 @@
     "react-responsive-modal": "^7.1.0",
     "react-to-print": "^3.3.0"
   },
+  "overrides": {
+    "@bedrock-layout/use-forwarded-ref": { "react": "^19" },
+    "@bedrock-layout/use-stateful-ref": { "react": "^19" }
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
