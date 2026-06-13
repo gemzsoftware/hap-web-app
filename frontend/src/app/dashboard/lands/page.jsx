@@ -34,7 +34,7 @@ export default function MyLands() {
         purchases.forEach(async (purchase) => {
             if (purchase.propertyId && !propertyImages[purchase.propertyId]) {
                 try {
-                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL
                     const res = await fetch(`${apiUrl}/properties/${purchase.propertyId}`)
                     if (res.ok) {
                         const data = await res.json()

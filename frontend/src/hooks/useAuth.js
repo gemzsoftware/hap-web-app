@@ -12,7 +12,7 @@ export function useAuth(requiredRole = 'user') {
     useEffect(() => {
         const verifySession = async () => {
             const token = localStorage.getItem('token')
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL
 
             if (!token) {
                 setUser(null)

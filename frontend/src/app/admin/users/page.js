@@ -21,7 +21,7 @@ export default function AdminUsersDirectoryPage() {
 
     const fetchSystemUsers = async () => {
         const token = localStorage.getItem('token')
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL
 
         let backendUsers = []
         let mergedUsers = []

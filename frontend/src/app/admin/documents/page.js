@@ -85,7 +85,7 @@ export default function Documents() {
 
         if (allUsers.length === 0) {
             const token = localStorage.getItem('token')
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL
 
             fetch(`${apiUrl}/admin/users`, {
                 headers: { 'Authorization': `Bearer ${token}` }

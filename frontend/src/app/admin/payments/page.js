@@ -22,7 +22,7 @@ export default function AdminPaymentsPage() {
 
         const token = localStorage.getItem('token')
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL
             const res = await fetch(`${apiUrl}/payments/admin/pending`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })

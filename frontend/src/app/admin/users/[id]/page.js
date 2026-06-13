@@ -92,7 +92,7 @@ export default function InvestorManagementHubPage() {
 
             if (!foundUser) {
                 const token = localStorage.getItem('token')
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL
                 try {
                     const res = await fetch(`${apiUrl}/admin/users/${id}`, {
                         headers: { Authorization: `Bearer ${token}` }

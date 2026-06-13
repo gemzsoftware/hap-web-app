@@ -59,7 +59,7 @@ export default function PurchasePage() {
     useEffect(() => {
         const fetchLand = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL
                 const res = await fetch(`${apiUrl}/properties/${id}`)
                 if (!res.ok) throw new Error('Asset missing')
                 const json = await res.json()
