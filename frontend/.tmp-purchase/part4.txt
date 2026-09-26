@@ -1,0 +1,83 @@
+
+    return (
+        <div className="min-h-screen bg-[#020617] text-white pb-24">
+            <div className="max-w-5xl mx-auto px-6 pt-10 space-y-8 text-left">
+
+                <button
+                    type="button"
+                    onClick={() => router.push('/dashboard/lands')}
+                    className="flex items-center gap-2 text-slate-400 hover:text-white font-bold text-xs uppercase tracking-widest transition-colors group"
+                >
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                    Back to my lands
+                </button>
+
+                <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-8">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500">
+                                Contract detail
+                            </p>
+
+                            <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase mt-2">
+                                {propertyTitle}
+                            </h1>
+
+                            <p className="flex items-center gap-2 text-xs text-slate-500 mt-2">
+                                <MapPin className="w-3.5 h-3.5" />
+                                {property?.fullAddress ||
+                                    property?.location ||
+                                    land?.location ||
+                                    'Location on record'}
+                            </p>
+                        </div>
+
+                        <span
+                            className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border ${
+                                purchase.status === 'completed'
+                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                    : purchase.status === 'cancelled' ||
+                                        purchase.status === 'defaulted'
+                                        ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                            }`}
+                        >
+                            {String(purchase.status || 'unknown').replace(/_/g, ' ')}
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+                        <SummaryTile label="Agreed price" value={formatCurrency(agreedPrice)} />
+                        <SummaryTile
+                            label="Paid so far"
+                            value={formatCurrency(amountPaid)}
+                            tone="text-emerald-400"
+                        />
+                        <SummaryTile
+                            label="Outstanding"
+                            value={formatCurrency(outstanding)}
+                            tone="text-amber-400"
+                        />
+                        <SummaryTile label="Progress" value={`${percentPaid}%`} />
+                    </div>
+
+                    <div className="mt-6 h-2 rounded-full bg-white/5 overflow-hidden">
+                        <div
+                            className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-300 transition-all duration-1000"
+                            style={{ width: `${percentPaid}%` }}
+                        />
+                    </div>
+
+                    {Number(purchase.monthlyAmount || 0) > 0 && (
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-4">
+                            Monthly installment: {formatCurrency(purchase.monthlyAmount)}
+                        </p>
+                    )}
+
+                    {purchase.fullyPaidAt && purchase.status !== 'completed' && (
+                        <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400 mt-4">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Fully paid. Company completion confirmation outstanding.
+                        </p>
+                    )}
+                </div>

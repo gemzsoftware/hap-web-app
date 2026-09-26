@@ -1,0 +1,117 @@
+
+    useEffect(() => {
+        // Redirect if not logged in
+        if (!authLoading && !isAuthenticated) {
+            router.push(`/login?redirect=/purchase/${id}`)
+            return
+        }
+
+        const fetchData = async () => {
+            if (!id || !isAuthenticated) return
+
+            setLoading(true)
+            setError(null)
+
+            try {
+                const purchaseItem = await loadPurchase()
+
+                if (!purchaseItem) {
+                    setError('Purchase not found')
+                    return
+                }
+
+                const propertyId =
+                    purchaseItem.propertyId?._id || purchaseItem.propertyId
+
+                if (propertyId) {
+                    try {
+                        const propertyData = await propertiesAPI.getById(propertyId)
+                        setLand(
+                            propertyData?.property ||
+                            propertyData?.data ||
+                            propertyData
+                        )
+                    } catch (propertyError) {
+                        console.error('Failed to fetch property:', propertyError)
+                        // Continue without property details
+                    }
+                }
+            } catch (fetchError) {
+                console.error('Failed to fetch purchase:', fetchError)
+                setError(fetchError.message || 'Failed to load purchase details')
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchData()
+    }, [id, isAuthenticated, authLoading, router, loadPurchase])
+
+    /*
+     * Creates the pending payment for the next amount due and opens the
+     * checkout screen for it.
+     */
+    const handleInitializePayment = async () => {
+        if (!purchase) return
+
+        setProcessing(true)
+        setError(null)
+        setNotice('')
+
+        try {
+            const agreedPrice = Number(purchase.agreedPrice || 0)
+            const amountPaid = Number(purchase.amountPaid || 0)
+            const outstanding = Math.max(agreedPrice - amountPaid, 0)
+
+            let amount = 0
+            let type = 'full_payment'
+
+            if (
+                purchase.status === 'deposit_pending' &&
+                Number(purchase.initialDeposit || 0) > 0
+            ) {
+                amount = Number(purchase.initialDeposit)
+                type = 'deposit'
+            } else if (Number(purchase.monthlyAmount || 0) > 0) {
+                amount = Math.min(Number(purchase.monthlyAmount), outstanding)
+                type = 'installment'
+            } else {
+                amount = outstanding
+                type = 'full_payment'
+            }
+
+            if (amount <= 0) {
+                setNotice('There is nothing left to pay on this purchase.')
+                return
+            }
+
+            const response = await purchasesAPI.initializePayment(id, {
+                amount,
+                type
+            })
+
+            /*
+             * The API returns the checkout path, for example
+             * /api/payments/stub-checkout/<paymentId>.
+             */
+            const authorizationUrl = response?.authorizationUrl || ''
+            const paymentId = authorizationUrl.split('/').filter(Boolean).pop()
+
+            if (!paymentId) {
+                setNotice(
+                    'The payment was created but its checkout link was missing. Please open your payments page.'
+                )
+                return
+            }
+
+            router.push(`/dashboard/payments/checkout?paymentId=${paymentId}`)
+        } catch (paymentError) {
+            console.error('Failed to start payment:', paymentError)
+            setError(
+                paymentError.message ||
+                'Could not start the payment. Please try again.'
+            )
+        } finally {
+            setProcessing(false)
+        }
+    }

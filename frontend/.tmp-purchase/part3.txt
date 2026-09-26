@@ -1,0 +1,89 @@
+
+    /*
+     * Investor-initiated cancellation request. The purchase only becomes
+     * cancelled once the company approves the request.
+     */
+    const handleRequestCancellation = async () => {
+        if (!purchase) return
+
+        setProcessing(true)
+        setError(null)
+        setNotice('')
+
+        try {
+            const response = await purchasesAPI.cancel(id, cancelReason.trim())
+            const cancellation = response?.cancellation || {}
+
+            setShowCancelForm(false)
+            setCancelReason('')
+
+            setNotice(
+                `Cancellation requested. ${
+                    Number(cancellation.refundableAmount || 0) > 0
+                        ? `Estimated refund after a ${cancellation.deductionPercent}% deduction: ${formatCurrency(cancellation.refundableAmount)}.`
+                        : 'The company will review your request.'
+                }`
+            )
+
+            await loadPurchase()
+        } catch (cancelError) {
+            console.error('Failed to request cancellation:', cancelError)
+            setError(
+                cancelError.message ||
+                'Could not submit the cancellation request.'
+            )
+        } finally {
+            setProcessing(false)
+        }
+    }
+
+    if (loading || authLoading) {
+        return (
+            <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+            </div>
+        )
+    }
+
+    if (!purchase) {
+        return (
+            <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center text-center px-6">
+                <p className="text-2xl font-light text-slate-400 mb-6">
+                    {error || 'Purchase Not Found'}
+                </p>
+
+                <button
+                    type="button"
+                    onClick={() => router.push('/dashboard/lands')}
+                    className="text-emerald-400 hover:text-emerald-300 text-xs font-bold uppercase tracking-widest flex items-center gap-2"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to my lands
+                </button>
+            </div>
+        )
+    }
+
+    const property = purchase.propertyId
+    const agreedPrice = Number(purchase.agreedPrice || purchase.totalPrice || 0)
+    const amountPaid = Number(purchase.amountPaid || 0)
+    const outstanding = Math.max(agreedPrice - amountPaid, 0)
+    const percentPaid = agreedPrice
+        ? Math.min(Math.round((amountPaid / agreedPrice) * 100), 100)
+        : 0
+
+    const isTerminal = TERMINAL_STATUSES.includes(purchase.status)
+    const cancellation = purchase.cancellation || {}
+    const cancellationPending = cancellation.reviewStatus === 'pending'
+
+    const paymentHistory = Array.isArray(purchase.payments)
+        ? purchase.payments
+        : []
+
+    const receipts = Array.isArray(purchase.receipts) ? purchase.receipts : []
+
+    const propertyTitle =
+        purchase.propertyTitle ||
+        property?.title ||
+        land?.title ||
+        'Property'

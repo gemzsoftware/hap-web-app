@@ -1,0 +1,59 @@
+
+                {notice && (
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold rounded-2xl p-4">
+                        {notice}
+                    </div>
+                )}
+
+                {error && (
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-300 text-xs font-bold rounded-2xl p-4">
+                        {error}
+                    </div>
+                )}
+
+                {cancellation.requestedAt && (
+                    <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 space-y-3">
+                        <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                            Cancellation
+                        </h2>
+
+                        <p className="text-xs font-bold text-white">
+                            Review status:{' '}
+                            {String(cancellation.reviewStatus || 'pending').replace(/_/g, ' ')}
+                        </p>
+
+                        {cancellation.reason && (
+                            <p className="text-xs text-slate-400">
+                                Reason: {cancellation.reason}
+                            </p>
+                        )}
+
+                        <p className="text-xs text-slate-400">
+                            Amount paid at request:{' '}
+                            {formatCurrency(cancellation.amountPaidAtCancellation || 0)}
+                        </p>
+
+                        <p className="text-xs text-slate-400">
+                            Deduction: {formatCurrency(cancellation.deductionAmount || 0)}
+                            {cancellation.deductionPercent !== undefined &&
+                            cancellation.deductionPercent !== null
+                                ? ` (${cancellation.deductionPercent}%)`
+                                : ''}
+                        </p>
+
+                        <p className="text-xs font-bold text-emerald-400">
+                            Refundable: {formatCurrency(cancellation.refundableAmount || 0)}
+                        </p>
+
+                        {cancellation.refundStatus &&
+                            cancellation.refundStatus !== 'not_applicable' && (
+                                <p className="text-xs text-slate-400">
+                                    Refund status:{' '}
+                                    {String(cancellation.refundStatus).replace(/_/g, ' ')}
+                                    {cancellation.refundReference
+                                        ? ` • reference ${cancellation.refundReference}`
+                                        : ''}
+                                </p>
+                            )}
+                    </div>
+                )}
