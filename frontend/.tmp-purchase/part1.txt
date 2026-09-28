@@ -1,0 +1,60 @@
+// ============================================
+// FILE: frontend/src/app/purchase/[id]/page.jsx
+// ============================================
+// CHANGES MADE:
+// 1. Reads the purchase, its terms and its history from the backend only
+// 2. Removed the investor "Verify Payment" / "Decline Payment" actions.
+//    Confirming a payment is an administrative decision, so those buttons
+//    called an endpoint that never existed for an investor.
+// 3. Added "Make Payment", which creates a pending payment through
+//    POST /api/purchases/:id/payments/initialize and opens the checkout
+// 4. Added "Request Cancellation", which submits the cancellation request for
+//    company review and shows the deduction and the refundable amount
+// ============================================
+
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import {
+    ArrowLeft,
+    Loader2,
+    CreditCard,
+    MapPin,
+    AlertTriangle,
+    CheckCircle2,
+    Clock3
+} from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
+import { purchasesAPI, propertiesAPI } from '@/lib/api/client'
+import { useAuth } from '@/hooks/useAuth'
+
+const TERMINAL_STATUSES = ['completed', 'cancelled', 'defaulted']
+
+export default function PurchaseDetailPage() {
+    const { id } = useParams()
+    const router = useRouter()
+    const { isAuthenticated, loading: authLoading } = useAuth()
+
+    const [purchase, setPurchase] = useState(null)
+    const [land, setLand] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
+    const [processing, setProcessing] = useState(false)
+    const [notice, setNotice] = useState('')
+    const [showCancelForm, setShowCancelForm] = useState(false)
+    const [cancelReason, setCancelReason] = useState('')
+
+    /*
+     * Re-reads the purchase. It is reused by the action handlers so a new
+     * payment or cancellation request is reflected immediately.
+     */
+    const loadPurchase = useCallback(async () => {
+        const purchaseData = await purchasesAPI.getById(id)
+        const purchaseItem =
+            purchaseData?.purchase || purchaseData?.data || purchaseData
+
+        setPurchase(purchaseItem)
+
+        return purchaseItem
+    }, [id])
